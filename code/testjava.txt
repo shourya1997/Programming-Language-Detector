@@ -1,0 +1,44 @@
+// Wap which reads six ints a, b, c, d, e, f, now consider the two straight lines wihth equations ax+by=c and dx+ey=f .
+//Your program should report whether the lines are parallel , coincident or intersecting. If they intersect , print the intersectoin point.
+import java.util.*;
+
+public class Lines
+{
+	public static void main (String args [] )
+	{  int a,b,c,d,e,f;
+		System.out.println("Enter the values for a,b,c,d,e,f for two lines: ");
+		Scanner a1 = new Scanner (System.in);
+		
+		a=a1.nextInt();
+		b=a1.nextInt();
+		c=a1.nextInt();
+		d=a1.nextInt();
+		e=a1.nextInt();
+		f=a1.nextInt();
+		
+		
+		if( (a/d) != (b/e))
+		 {System.out.println("The lines are intersecting");
+		  intersectionPoint(a,b,c,d,e,f);}
+		else 
+		 {
+	            if((a/d) == (c/f))
+	                 System.out.println("The lines are Coincident ");
+				 else
+				     System.out.println("The lines are Parallel ");	  	
+			  	 
+		 }
+	    
+	}
+
+	public static void intersectionPoint(int a, int b , int c , int d , int e, int f)
+	 {
+	   float x,y;
+	   x= ((-b) + Math.sqrt((b*b) - (4*a*c)) / (2*a));
+	   y= (f - (d*x)) / (e);
+	   System.out.println("The intersection point is " + x + "and " + y); 	   
+	 
+	 }
+
+
+}

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+	<title>Limewit</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<style>
+		.input-group {
+		
+			width: 100%;
+		}
+		input.btn.btn-lg,
+		input.btn.btn-lg:focus {
+			
+			width: 70%;
+			height: 40px;
+			
+		}
+		button.btn {
+			width: 25%;
+			height: 40px;
+			
+		}
+		body,h1,h2,h3,h4,h5,h6 {font-family: "century gothic", sans-serif}
+		body, html {
+			height: 100%;
+			color: #363636;
+			line-height: 1.8;
+		}
+		/* Create a Parallax Effect */
+		.bgimg-1, .bgimg-2, .bgimg-3 {
+			background-attachment: fixed;
+			background-position: center;
+			background-repeat: no-repeat;
+			background-size: cover;
+		}
+		/*First image*/
+		.bgimg-1 {
+			background-image: url("LimeWit Cover.png");
+			min-height: 100%;
+		}
+		/* Second image (Portfolio) */
+		.bgimg-2 {
+			background-image: url("bg_2.jpg");
+			min-height: 1000px;
+		}
+		.bgimg-3 {
+			background-image: url("bg_3.jpg");
+			min-height: 400px;
+		}
+		.child_div {
+			
+			background-color : #363636;
+			width : 750px;
+			height : 1040px;
+			padding-top: 10px;
+			margin-top : 60px;
+			margin-left : 300px;
+			
+		}
+		
+		.parent_div{
+			background-image : url('bg_2.jpg');
+			width : 100%;
+			height : 1400px;
+			border : 2px solid rgba(255, 0, 0, .5) ;
+			margin : 0 auto;
+		}
+		#sub_form {
+			text-align : center;
+			color : #FDFEFE ;
+			padding-top : 50px;
+			padding-bottom : 30px;
+		}
+		#footer1 {
+			padding-left: 60px;
+		}
+		#footer2 {
+			padding-left: 200px;
+		}
+
+	</style>
+	<body>
+		<!-- Navbar (sit on top) -->
+		<div class="w3-top">
+			<div class="w3-row w3-padding w3-black" id="myNavbar" >
+				<!--when the screen becomes small-->
+				<a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right" href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
+					<i class="fa fa-bars"></i>
+				</a>
+				<!--for the big screens-->	
+				<a href="#home" class="w3-bar-item w3-button">HOME</a>
+				<a href="#categories" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-th"></i> CATEGORIES</a>
+				<a href="#submitform" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-file-text-o"></i> SUBMIT FORM</a>
+				<a href="#aboutus" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-user"></i> ABOUT US</a>
+				<a href="#contact" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> CONTACT</a>				
+			</div>
+		
+			<!--Navbar on small screens-->
+			<div id="navDemo" class="w3-bar-block w3-black w3-hide w3-hide-large w3-hide-medium">
+				<a href="#categories" class="w3-bar-item w3-button" onclick="toggleFunction()">CATEGORIES</a>
+				<a href="#submitform" class="w3-bar-item w3-button" onclick="toggleFunction()">SUBMIT FORM</a>
+				<a href="#aboutus" class="w3-bar-item w3-button" onclick="toggleFunction()">ABOUT US</a>
+				<a href="#contact" class="w3-bar-item w3-button" onclick="toggleFunction()">CONTACT</a>
+			</div>
+		</div>
+		
+		<!--first parallax image-->
+		<div class="bgimg-1 w3-display-container w3-grayscale-min" id="home">
+			<div class="w3-display-left w3-text-white" style="padding:48px">
+				<span class="w3-jumbo w3-hide-small"><b>Limewit</b></span>
+				<br>
+				<span class="w3-xxlarge">A megaplatform for untapped talents</span>
+			</div>
+			<div class="w3-display-bottomleft w3-text-white w3-large" style="padding:24px 48px">
+				<a href = "https://www.facebook.com/limewit/" style="padding:12px 12px"><i class="fa fa-facebook-official w3-hover-opacity-min ;" style="font-size:36px;color:#D3D3D3;text-shadow:2px 2px 4px #000000;" ></i></a>
+				<i class="fa fa-instagram w3-hover-opacity" style="font-size:36px;color:white;text-shadow:2px 2px 4px #000000;padding:12px 12px"></i>
+				<i class="fa fa-snapchat w3-hover-opacity" style="font-size:36px;color:white;text-shadow:2px 2px 4px #000000;padding:12px 12px"></i>
+				<i class="fa fa-pinterest-p w3-hover-opacity" style="font-size:36px;color:white;text-shadow:2px 2px 4px #000000;padding:12px 12px"></i>
+				<i class="fa fa-twitter w3-hover-opacity" style="font-size:36px;color:white;text-shadow:2px 2px 4px #000000;padding:12px 12px"></i>
+				<i class="fa fa-linkedin w3-hover-opacity" style="font-size:36px;color:white;text-shadow:2px 2px 4px #000000;padding:12px 12px"></i>
+			</div>
+		</div>
+		<!--Categories-->
+		<div class="w3-main w3-content w3-padding" style="max-width:1200px;margin-top:70px">
+			<div class="w3-row-padding w3-padding-16 w3-center" id="categories">
+				<h3 class="w3-center">Categories</h3>
+			
+				<div class="w3-quarter">
+					<img src="photo.jpg" alt="art" style="width:100%" height="300" width="300"class="img-responsive">
+						<h3>Art</h3>
+						<p>It is the supreme art of the teacher to awaken joy in creative expression and knowledge.</p>
+						<p>"Albert Einstein"</p>
+				</div>
+				<div class="w3-quarter">
+					<img src = "photography.jpg" alt="photography" height="300" width="300" style="width:100%">
+						<h3>Photography</h3>
+						<p>In photography there is a reality so subtle that it becomes more real than reality.</p>
+						<p>"Ansel Adams"</p>
+				</div>
+				<div class="w3-quarter">
+					<img src = "tale.jpg" alt="tales" style="width:100%" height="300" width="300">
+						<h3>Tales</h3>
+						<p>Men fear death as children fear to go in the dark; and as that natural fear in children is increased by tales, so is the other.</p>
+						<p>"Francis Bacon"</p>
+				</div>
+				<div class="w3-quarter">
+					<img src="shortfilm.jpg" alt="short film" style="width:100%" height="300" width="300">
+						<h3>Short flms</h3>
+						<p>I started making little short films with friends, and then I decided I wanted to get into the school play in high school.</p>
+						<p>"Bill Hader"</p>
+				</div>
+			</div>
+		</div>
+		<!-- Second Parallax Image with Portfolio Text -->
+		<!--<div class="bgimg-2 w3-display-container w3-opacity-min">
+		  <div class="w3-display-middle">
+			<span class="w3-xxlarge w3-text-white w3-wide">SUBMIT FORM</span>
+		  </div>
+		</div>
+		-->
+		<!--Achievement bar-->
+		<div class="w3-row w3-center w3-black w3-padding-16">
+			
+			<div class="w3-quarter w3-section">
+				<span class="w3-xlarge">14+</span><br>
+				Partners
+			</div>
+			<div class="w3-quarter w3-section">
+				<span class="w3-xlarge">55+</span><br>
+				Projects Done
+			</div>
+			<div class="w3-quarter w3-section">
+				<span class="w3-xlarge">89+</span><br>
+				Happy Clients
+			</div>
+			<div class="w3-quarter w3-section">
+				<span class="w3-xlarge">150+</span><br>
+				Meetings
+			</div>
+		</div>
+		<!--Submit form-->
+		
+		<div class = "container ">
+			<div class = "parent_div">
+					<h1 id="sub_form" style = "letter-spacing: 10px; align : center;">SUBMIT	</t> FORM</h1>
+				
+				<div class = "child_div"> 
+					<form style="margin:auto;width:70%" action="/action_page.php" target="_blank">
+						<p class="w3-large w3-text-white w3-center">Presently, we accept Tales, Poems, Writeups, Photographs, Artworks and Videos.</p>
+						<p class="w3-large w3-text-white w3-center"><strong>"Your Piece of art is vital for us"</strong></p>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" name="Name" placeholder = "Full Name(Optional)">
+							</div>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" required name="display_nm" placeholder = "Display Name">
+							</div>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" name="Email" placeholder = "Email(Optional)" >
+							</div>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" required name="inst_nm" placeholder = "Instagram Username(if you aren't on Instagram write N/A)" >
+							</div>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" required name="fb_nm" placeholder = "Facebook Username(if you aren't on facebook write N/A)" >
+							</div>
+							<div class="w3-section">
+								<input class="w3-input w3-border" type="text" required name="tweet_nm" placeholder = "Twitter Username(if you aren't on twitter write N/A)" >
+							</div>
+							<p>Category of Submission</p>
+							<div class="radio">
+								<label class="w3-text-white"><input type="radio" name="Writeup">&nbsp &nbsp  Writeup(s) (Tale/Poem/Short-Story/Editorial/Dialogues/Others)</label>
+							</div>
+							<div class="radio">
+							  <label class="w3-text-white"><input type="radio" name="Photographs">&nbsp &nbsp Photograph(s)</label>
+							</div>
+							<div class="radio">
+							  <label class="w3-text-white"><input type="radio" name="Artworks">&nbsp &nbsp  Artwork(s)</label>
+							</div>
+							<div class="radio">
+							  <label class="w3-text-white"><input type="radio" name="Videos">&nbsp &nbsp Video(s)</label>
+							</div>
+							<div class="radio">
+							  <label class="w3-text-white"><input type="radio" name="Others">&nbsp &nbsp Others</label>
+							</div>
+							<div class="radio">
+							  <label class="w3-text-white"><input type="radio" name="thinkitover">&nbsp &nbsp #think_it_over Content</label>
+							</div>
+							<div class="w3-section">
+								<p>Message</p>
+								<label><textarea style="width:100%" rows="4" cols="112" Placeholder = "  Submit your writeups here. If you want to submit Photographs/artworks/vedios/others you may upload them   on online platform. Paste the link here"></textarea></label>
+							</div>
+							
+							<p><button type="submit" class="w3-button w3-block w3-dark-grey">Submit</button></p>
+							
+					</form>	
+				</div>
+			</div>
+		</div>
+	
+		<!-- Third Parallax Image with Portfolio Text -->
+		<div class="bgimg-3 w3-display-container w3-opacity-min">
+			<div class="w3-display-middle">
+				<span class="w3-xxlarge w3-text-white w3-wide">Upcoming CONTEST</span>
+			</div>
+		</div>
+		<!-- Footer -->
+		<footer class="w3-container w3-padding-32 w3-theme-d1 w3-center w3-black">
+			
+			<div class = "w3-left" id = "footer1">
+				<h4>Follow Us</h4>
+				<a class="w3-button w3-large w3-teal" href="javascript:void(0)" title="Facebook"><i class="fa fa-facebook"></i></a>
+				<a class="w3-button w3-large w3-teal" href="javascript:void(0)" title="Twitter"><i class="fa fa-twitter"></i></a>
+				<a class="w3-button w3-large w3-teal" href="javascript:void(0)" title="Google +"><i class="fa fa-google-plus"></i></a>
+				<a class="w3-button w3-large w3-teal" href="javascript:void(0)" title="Google +"><i class="fa fa-instagram"></i></a>
+				<a class="w3-button w3-large w3-teal w3-hide-small" href="javascript:void(0)" title="Linkedin"><i class="fa fa-linkedin"></i></a>
+				<h3>Subscribe To Us</h3>
+				<div class="well" >
+					<form action="#">
+						<div class="input-group">
+							<input class="btn btn-lg" name="email"  id="email" type="email" placeholder="Your Email" required>
+							<button class="btn btn-info btn-lg w3-teal" type="submit" name= "subcribe">Submit</button>
+						</div>
+					</form>
+				</div>
+				<p>Powered by <a href="https://limewit.in/" target="_blank">www.limewit.in</a></p>
+			</div>
+			<div class = "w3-left" id = "footer2">
+				<h4>Contact us</h4>
+				<!--<div class="w3-section">
+					<input class="w3-input w3-border" type="text" name="contact_nm" placeholder = "Name" style="width: 300px;">
+				</div>
+				<div class="w3-section">
+					<input class="w3-input w3-border" type="email" name="contact_email" placeholder = "Email" >
+				</div>
+				<div class="w3-section">
+					<label><textarea style="width:100%" Placeholder = "  Comment"></textarea></label>
+				</div>-->
+				<div class="input-group">
+					<input type="text" class="form-control" placeholder="Start"/>&nbsp	
+					<input type="text" class="form-control " placeholder="End"/><br>
+					<textarea rows="4" cols="43" style="padding-top:20px;"></textarea>
+				</div>
+				
+				<p>contactus@limewit.in</p>
+			</div>
+			<div style="position:relative;bottom:-100px;z-index:1;" class="w3-tooltip w3-right">
+					<span class="w3-text w3-padding w3-teal w3-hide-small">Go To Top</span>   
+					<a class="w3-button w3-theme" href="#home"><span class="w3-xlarge">
+					<i class="fa fa-chevron-circle-up"></i></span></a>
+			</div>
+				  
+			
+		</footer>
+		<script>
+			// Change style of navbar on scroll
+			window.onscroll = function() {myFunction()};
+			function myFunction() {
+				var navbar = document.getElementById("myNavbar");
+				if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+					navbar.className = "w3-bar" + " w3-card-2" + " w3-animate-top" + " w3-black";
+				} else {
+					navbar.className = navbar.className.replace(" w3-card-2 w3-animate-top w3-black", "");
+				}
+			}
+			// Used to toggle the menu on small screens when clicking on the menu button
+			function toggleFunction() {
+				var x = document.getElementById("navDemo");
+				if (x.className.indexOf("w3-show") == -1) {
+					x.className += " w3-show";
+				} else {
+					x.className = x.className.replace(" w3-show", "");
+				}
+			}
+			
+		</script>
+	</body>
+</html>
