@@ -111,14 +111,18 @@ def getcode():
 	# _code = pred_java[0]
 	# print("True pred shud be html, but:",pred_html)
 	# print("True pred shud be java, but:",pred_java)
-	
+	return redirect(url_for('showinfo' , language = pred_java[0].upper() ))
 
 
 
+@app.route("/output")
+def showinfo():
+	language = request.args['language']
+	return render_template('index.html' , var= language)		
 
 
 
-	return render_template('index.html' , var= pred_java[0].upper())
+	# return render_template('index.html' , var= pred_java[0].upper())
 		
 if __name__ == "__main__":	
 	app.run(host='127.0.0.1', debug=True, port=5000)
