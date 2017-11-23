@@ -15,58 +15,28 @@ import weka.core.converters.CSVLoader;
 import weka.core.converters.CSVSaver;
 import weka.core.converters.Loader;
 
-/**
- * The Predict class uses the trained Classifier and the test data to create a
- * prediction CSV file. As noted inthe README.md, we modified the original
- * test.csv file to contain the 'survived' column. We do not actually use the
- * values of this column, weka simply requires the train and test data to match.
- * 
- * @author jbirchfield
- * 
- */
 public class Predict {
 
 	public static void main(String[] args) throws Exception {
 
-		/*
-		 * First we load the test data from our ARFF file
-		 */
 		ArffLoader testLoader = new ArffLoader();
 		testLoader.setSource(new File("test.arff"));
 		testLoader.setRetrieval(Loader.BATCH);
 		Instances testDataSet = testLoader.getDataSet();
 
-		/*
-		 * Now we tell the data set which attribute we want to classify, in our
-		 * case, we want to classify the first column: survived
-		 */
 		Attribute testAttribute = testDataSet.attribute(0);
 		testDataSet.setClass(testAttribute);
 		testDataSet.deleteStringAttributes();
 
-		/*
-		 * Now we read in the serialized model from disk
-		 */
 		Classifier classifier = (Classifier) SerializationHelper
 				.read("titanic.model");
 
-		/*
-		 * This part may be a little confusing. We load up the test data again
-		 * so we have a prediction data set to populate. As we iterate over the
-		 * first data set we also iterate over the second data set. After an
-		 * instance is classified, we set the value of the prediction data set
-		 * to be the value of the classification
-		 */
 		ArffLoader test1Loader = new ArffLoader();
 		test1Loader.setSource(new File("test.arff"));
 		Instances test1DataSet = test1Loader.getDataSet();
 		Attribute test1Attribute = test1DataSet.attribute(0);
 		test1DataSet.setClass(test1Attribute);
 
-		/*
-		 * Now we iterate over the test data and classify each entry and set the
-		 * value of the 'survived' column to the result of the classification
-		 */
 		Enumeration testInstances = testDataSet.enumerateInstances();
 		Enumeration test1Instances = test1DataSet.enumerateInstances();
 		while (testInstances.hasMoreElements()) {
@@ -76,10 +46,6 @@ public class Predict {
 			instance1.setClassValue(classification);
 		}
 
-		/*
-		 * Now we want to write out our predictions. The resulting file is in a
-		 * format suitable to submit to Kaggle.
-		 */
 		CSVSaver predictedCsvSaver = new CSVSaver();
 		predictedCsvSaver.setFile(new File("predict.csv"));
 		predictedCsvSaver.setInstances(test1DataSet);
@@ -101,57 +67,25 @@ import weka.core.SerializationHelper;
 import weka.core.converters.ArffLoader;
 import weka.core.converters.Loader;
 
-/**
- * The Train class is responsible for loading the training data, instantiating a
- * Classifier, then building the classifier instance with the training data. It
- * then serializes the Classifier to disk for other operations to use.
- * 
- * As seen in the README.md file, we have converted the given CSV formatted
- * traiing and teat data into ARFF formatted files. This allows us to specify
- * the types of each column (nominal, numeric, string).
- * 
- * @author jbirchfield
- * 
- */
 public class Train {
 
 	public static void main(String[] args) throws Exception {
-		/*
-		 * First we load the training data from our ARFF file
-		 */
 		ArffLoader trainLoader = new ArffLoader();
 		trainLoader.setSource(new File("train.arff"));
 		trainLoader.setRetrieval(Loader.BATCH);
 		Instances trainDataSet = trainLoader.getDataSet();
 
-		/*
-		 * Now we tell the data set which attribute we want to classify, in our
-		 * case, we want to classify the first column: survived
-		 */
 		Attribute trainAttribute = trainDataSet.attribute(0);
 		trainDataSet.setClass(trainAttribute);
 
-		/*
-		 * The RandomForest implementation cannot handle columns of type string,
-		 * so we remove them for now.
-		 */
 		trainDataSet.deleteStringAttributes();
 
-		/*
-		 * Create a new Classifier of type RandomForest and configure it.
-		 */
 		 RandomForest classifier = new RandomForest();
 		 classifier.setNumTrees(500);
 		 classifier.setDebug(true);
 
-		/*
-		 * Now we train the classifier
-		 */
 		classifier.buildClassifier(trainDataSet);
 
-		/*
-		 * We are done training the classifier, so now we serialize it to disk
-		 */
 		SerializationHelper.write("titanic.model", classifier);
 		System.out.println("Saved trained model to titanic.model");
 
@@ -176,82 +110,38 @@ import weka.core.converters.CSVLoader;
 import weka.core.converters.CSVSaver;
 import weka.core.converters.Loader;
 
-/**
- * The Verify class uses the trained model and the predicted data to verify the
- * classification actually worked.
- * 
- * @author jbirchfield
- * 
- */
 public class Verify {
 
 	public static void main(String[] args) throws Exception {
 
-		/*
-		 * First we load our preditons from the CSV formatted file.
-		 */
 		CSVLoader predictCsvLoader = new CSVLoader();
 		predictCsvLoader.setSource(new File("predict.csv"));
 
-		/*
-		 * Since we are not using the ARFF format here, we have to give the
-		 * loader a little bit of information about the data types. Columns
-		 * 3,8,10 need to be of type string and columns 1,4,11 are nominal
-		 * types.
-		 */
 		predictCsvLoader.setStringAttributes("3,8,10");
 		predictCsvLoader.setNominalAttributes("1,4,11");
 		Instances predictDataSet = predictCsvLoader.getDataSet();
 
-		/*
-		 * Here we set the attribute we want to test the predicitons with
-		 */
 		Attribute testAttribute = predictDataSet.attribute(0);
 		predictDataSet.setClass(testAttribute);
 
-		/*
-		 * We still have to remove all string attributes before we can test
-		 */
 		predictDataSet.deleteStringAttributes();
 
-		/*
-		 * Next we load the training data from our ARFF file
-		 */
 		ArffLoader trainLoader = new ArffLoader();
 		trainLoader.setSource(new File("train.arff"));
 		trainLoader.setRetrieval(Loader.BATCH);
 		Instances trainDataSet = trainLoader.getDataSet();
 
-		/*
-		 * Now we tell the data set which attribute we want to classify, in our
-		 * case, we want to classify the first column: survived
-		 */
 		Attribute trainAttribute = trainDataSet.attribute(0);
 		trainDataSet.setClass(trainAttribute);
 
-		/*
-		 * The RandomForest implementation cannot handle columns of type string,
-		 * so we remove them for now.
-		 */
 		trainDataSet.deleteStringAttributes();
 		
-		/*
-		 * Now we read in the serialized model from disk
-		 */
 		Classifier classifier = (Classifier) SerializationHelper
 				.read("titanic.model");
 
-		/*
-		 * Next we will use an Evaluation class to evaluate the performance of
-		 * our Classifier.
-		 */
 		Evaluation evaluation = new Evaluation(trainDataSet);
 		evaluation.evaluateModel(classifier, predictDataSet, new Object[] {});
 
-		/*
-		 * After we evaluate the Classifier, we write out the summary
-		 * information to the screen.
-		 */
 		System.out.println(classifier);
 		System.out.println(evaluation.toSummaryString());
 
@@ -268,9 +158,6 @@ import weka.core.Instances;
 
 public class MultiClassifier extends Classifier {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8996052328536347834L;
 	
 	List<Classifier> classifiers = new ArrayList<Classifier>();
@@ -323,14 +210,6 @@ package com.blankj.structure;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/10/19
- *     desc  :
- * </pre>
- */
 public class Interval {
     public int start;
     public int end;
@@ -345,12 +224,6 @@ public class Interval {
         end = e;
     }
 
-    /**
-     * 创建测试数据
-     *
-     * @param data [[X,X],[X,X],[X,X]]
-     * @return {@link List<Interval>}
-     */
     public static List<Interval> createTestData(String data) {
         List<Interval> list = new ArrayList<>();
         String[] d = data.substring(1, data.length() - 1).split("],\\[");
@@ -379,14 +252,6 @@ public class Interval {
 }
 package com.blankj.hard._004;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/10/12
- *     desc  :
- * </pre>
- */
 public class Solution {
     public double findMedianSortedArrays(int[] nums1, int[] nums2) {
         int len = nums1.length + nums2.length;
@@ -428,14 +293,6 @@ package com.blankj.hard._068;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/11/01
- *     desc  :
- * </pre>
- */
 public class Solution {
 
     public List<String> fullJustify(String[] words, int maxWidth) {
@@ -486,14 +343,6 @@ public class Solution {
 }
 package com.blankj.medium._050;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/10/18
- *     desc  :
- * </pre>
- */
 public class Solution {
     public double myPow(double x, int n) {
         if (n < 0) return helper(1 / x, -n);
@@ -504,8 +353,6 @@ public class Solution {
         if (n == 0) return 1;
         if (n == 1) return x;
         double d = helper(x, n >>> 1);
-        if (n % 2 == 0) return d * d;
-        return d * d * x;
     }
 
     public static void main(String[] args) {
@@ -517,14 +364,6 @@ package com.blankj.medium._002;
 
 import com.blankj.structure.ListNode;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/10/11
- *     desc  :
- * </pre>
- */
 public class Solution {
     public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
         ListNode node = new ListNode(0);
@@ -557,14 +396,6 @@ public class Solution {
 }
 package com.blankj.medium._003;
 
-/**
- * <pre>
- *     author: Blankj
- *     blog  : http://blankj.com
- *     time  : 2017/10/11
- *     desc  :
- * </pre>
- */
 public class Solution {
     public int lengthOfLongestSubstring(String s) {
         int len;
@@ -608,14 +439,12 @@ public class AttachExample extends FragmentActivity {
 
 		setTitle(R.string.attach);
 
-		// set the Above View
 		setContentView(R.layout.content_frame);
 		getSupportFragmentManager()
 		.beginTransaction()
 		.replace(R.id.content_frame, new SampleListFragment())
 		.commit();
 
-		// configure the SlidingMenu
 		menu = new SlidingMenu(this);
 		menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
 		menu.setShadowWidthRes(R.dimen.shadow_width);
@@ -673,7 +502,6 @@ public class BaseActivity extends SlidingFragmentActivity {
 
 		setTitle(mTitleRes);
 
-		// set the Behind View
 		setBehindContentView(R.layout.menu_frame);
 		if (savedInstanceState == null) {
 			FragmentTransaction t = this.getSupportFragmentManager().beginTransaction();
@@ -684,7 +512,6 @@ public class BaseActivity extends SlidingFragmentActivity {
 			mFrag = (ListFragment)this.getSupportFragmentManager().findFragmentById(R.id.menu_frame);
 		}
 
-		// customize the SlidingMenu
 		SlidingMenu sm = getSlidingMenu();
 		sm.setShadowWidthRes(R.dimen.shadow_width);
 		sm.setShadowDrawable(R.drawable.shadow);
@@ -751,7 +578,6 @@ public class ExampleListActivity extends SherlockPreferenceActivity {
 		super.onCreate(savedInstanceState);
 		setTitle(R.string.app_name);
 		
-//		Crittercism.init(getApplicationContext(), "508ab27601ed857a20000003");
 		this.addPreferencesFromResource(R.xml.main);
 	}
 
@@ -896,7 +722,6 @@ public class PropertiesActivity extends BaseActivity {
 
 		setContentView(R.layout.properties);
 		
-		// left and right modes
 		RadioGroup mode = (RadioGroup) findViewById(R.id.mode);
 		mode.check(R.id.left);
 		mode.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -925,7 +750,6 @@ public class PropertiesActivity extends BaseActivity {
 			}			
 		});
 
-		// touch mode stuff
 		RadioGroup touchAbove = (RadioGroup) findViewById(R.id.touch_above);
 		touchAbove.check(R.id.touch_above_full);
 		touchAbove.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -945,7 +769,6 @@ public class PropertiesActivity extends BaseActivity {
 			}
 		});
 
-		// scroll scale stuff
 		SeekBar scrollScale = (SeekBar) findViewById(R.id.scroll_scale);
 		scrollScale.setMax(1000);
 		scrollScale.setProgress(333);
@@ -962,7 +785,6 @@ public class PropertiesActivity extends BaseActivity {
 		});
 
 
-		// behind width stuff
 		SeekBar behindWidth = (SeekBar) findViewById(R.id.behind_width);
 		behindWidth.setMax(1000);
 		behindWidth.setProgress(750);
@@ -975,12 +797,10 @@ public class PropertiesActivity extends BaseActivity {
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				float percent = (float) seekBar.getProgress()/seekBar.getMax();
-				getSlidingMenu().setBehindWidth((int) (percent * getSlidingMenu().getWidth()));
 				getSlidingMenu().requestLayout();
 			}
 		});
 
-		// shadow stuff
 		CheckBox shadowEnabled = (CheckBox) findViewById(R.id.shadow_enabled);
 		shadowEnabled.setChecked(true);
 		shadowEnabled.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -1004,13 +824,11 @@ public class PropertiesActivity extends BaseActivity {
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
 				float percent = (float) seekBar.getProgress()/ (float) seekBar.getMax();
-				int width = (int) (percent * (float) getSlidingMenu().getWidth());
 				getSlidingMenu().setShadowWidth(width);
 				getSlidingMenu().invalidate();
 			}
 		});
 
-		// fading stuff
 		CheckBox fadeEnabled = (CheckBox) findViewById(R.id.fade_enabled);
 		fadeEnabled.setChecked(true);
 		fadeEnabled.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -1386,7 +1204,6 @@ public class BirdMenuFragment extends ListFragment {
 			switchFragment(newContent);
 	}
 	
-	// the meat of switching the above fragment
 	private void switchFragment(Fragment fragment) {
 		if (getActivity() == null)
 			return;
@@ -1426,7 +1243,6 @@ public class ColorFragment extends Fragment {
 		if (savedInstanceState != null)
 			mColorRes = savedInstanceState.getInt("mColorRes");
 		int color = getResources().getColor(mColorRes);
-		// construct the RelativeLayout
 		RelativeLayout v = new RelativeLayout(getActivity());
 		v.setBackgroundColor(color);		
 		return v;
@@ -1492,7 +1308,6 @@ public class ColorMenuFragment extends ListFragment {
 			switchFragment(newContent);
 	}
 
-	// the meat of switching the above fragment
 	private void switchFragment(Fragment fragment) {
 		if (getActivity() == null)
 			return;
@@ -1528,27 +1343,23 @@ public class FragmentChangeActivity extends BaseActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// set the Above View
 		if (savedInstanceState != null)
 			mContent = getSupportFragmentManager().getFragment(savedInstanceState, "mContent");
 		if (mContent == null)
 			mContent = new ColorFragment(R.color.red);	
 		
-		// set the Above View
 		setContentView(R.layout.content_frame);
 		getSupportFragmentManager()
 		.beginTransaction()
 		.replace(R.id.content_frame, mContent)
 		.commit();
 		
-		// set the Behind View
 		setBehindContentView(R.layout.menu_frame);
 		getSupportFragmentManager()
 		.beginTransaction()
 		.replace(R.id.menu_frame, new ColorMenuFragment())
 		.commit();
 		
-		// customize the SlidingMenu
 		getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
 	}
 	
@@ -1582,17 +1393,6 @@ import com.jeremyfeinstein.slidingmenu.example.R;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 
-/**
- * This activity is an example of a responsive Android UI.
- * On phones, the SlidingMenu will be enabled only in portrait mode.
- * In landscape mode, it will present itself as a dual pane layout.
- * On tablets, it will will do the same general thing. In portrait
- * mode, it will enable the SlidingMenu, and in landscape mode, it
- * will be a dual pane layout.
- * 
- * @author jeremy
- *
- */
 public class ResponsiveUIActivity extends SlidingFragmentActivity {
 
 	private Fragment mContent;
@@ -1604,22 +1404,18 @@ public class ResponsiveUIActivity extends SlidingFragmentActivity {
 
 		setContentView(R.layout.responsive_content_frame);
 
-		// check if the content frame contains the menu frame
 		if (findViewById(R.id.menu_frame) == null) {
 			setBehindContentView(R.layout.menu_frame);
 			getSlidingMenu().setSlidingEnabled(true);
 			getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-			// show home as up so we can toggle
 			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		} else {
-			// add a dummy view
 			View v = new View(this);
 			setBehindContentView(v);
 			getSlidingMenu().setSlidingEnabled(false);
 			getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
 		}
 
-		// set the Above View Fragment
 		if (savedInstanceState != null)
 			mContent = getSupportFragmentManager().getFragment(savedInstanceState, "mContent");
 		if (mContent == null)
@@ -1629,13 +1425,11 @@ public class ResponsiveUIActivity extends SlidingFragmentActivity {
 		.replace(R.id.content_frame, mContent)
 		.commit();
 
-		// set the Behind View Fragment
 		getSupportFragmentManager()
 		.beginTransaction()
 		.replace(R.id.menu_frame, new BirdMenuFragment())
 		.commit();
 
-		// customize the SlidingMenu
 		SlidingMenu sm = getSlidingMenu();
 		sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		sm.setShadowWidthRes(R.dimen.shadow_width);
@@ -1643,7 +1437,6 @@ public class ResponsiveUIActivity extends SlidingFragmentActivity {
 		sm.setBehindScrollScale(0.25f);
 		sm.setFadeDegree(0.25f);
 
-		// show the explanation dialog
 		if (savedInstanceState == null)
 			new AlertDialog.Builder(this)
 			.setTitle(R.string.what_is_this)
@@ -1712,7 +1505,6 @@ public abstract class CustomAnimation extends BaseActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		// set the Above View
 		setContentView(R.layout.content_frame);
 		getSupportFragmentManager()
 		.beginTransaction()
@@ -1740,9 +1532,6 @@ public abstract class SlidingMapActivity extends MapActivity implements SlidingA
 
 	private SlidingActivityHelper mHelper;
 
-	/* (non-Javadoc)
-	 * @see com.google.android.maps.MapActivity#onCreate(android.os.Bundle)
-	 */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -1750,18 +1539,12 @@ public abstract class SlidingMapActivity extends MapActivity implements SlidingA
 		mHelper.onCreate(savedInstanceState);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onPostCreate(android.os.Bundle)
-	 */
 	@Override
 	public void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
 		mHelper.onPostCreate(savedInstanceState);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#findViewById(int)
-	 */
 	@Override
 	public View findViewById(int id) {
 		View v = super.findViewById(id);
@@ -1770,106 +1553,64 @@ public abstract class SlidingMapActivity extends MapActivity implements SlidingA
 		return mHelper.findViewById(id);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onSaveInstanceState(android.os.Bundle)
-	 */
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		mHelper.onSaveInstanceState(outState);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#setContentView(int)
-	 */
 	@Override
 	public void setContentView(int id) {
 		setContentView(getLayoutInflater().inflate(id, null));
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#setContentView(android.view.View)
-	 */
 	@Override
 	public void setContentView(View v) {
 		setContentView(v, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#setContentView(android.view.View, android.view.ViewGroup.LayoutParams)
-	 */
 	@Override
 	public void setContentView(View v, LayoutParams params) {
 		super.setContentView(v, params);
 		mHelper.registerAboveContentView(v, params);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#setBehindContentView(int)
-	 */
 	public void setBehindContentView(int id) {
 		setBehindContentView(getLayoutInflater().inflate(id, null));
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#setBehindContentView(android.view.View)
-	 */
 	public void setBehindContentView(View v) {
 		setBehindContentView(v, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#setBehindContentView(android.view.View, android.view.ViewGroup.LayoutParams)
-	 */
 	public void setBehindContentView(View v, LayoutParams params) {
 		mHelper.setBehindContentView(v, params);
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#getSlidingMenu()
-	 */
 	public SlidingMenu getSlidingMenu() {
 		return mHelper.getSlidingMenu();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#toggle()
-	 */
 	public void toggle() {
 		mHelper.toggle();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#showAbove()
-	 */
 	public void showContent() {
 		mHelper.showContent();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#showBehind()
-	 */
 	public void showMenu() {
 		mHelper.showMenu();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#showSecondaryMenu()
-	 */
 	public void showSecondaryMenu() {
 		mHelper.showSecondaryMenu();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.jeremyfeinstein.slidingmenu.lib.app.SlidingActivityBase#setSlidingActionBarEnabled(boolean)
-	 */
 	public void setSlidingActionBarEnabled(boolean b) {
 		mHelper.setSlidingActionBarEnabled(b);
 	}
 
-	/* (non-Javadoc)
-	 * @see android.app.Activity#onKeyUp(int, android.view.KeyEvent)
-	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
 		boolean b = mHelper.onKeyUp(keyCode, event);
@@ -1901,7 +1642,6 @@ public class WhenTheUserEntersAnInitialGrid {
     @Managed(uniqueSession = true)
     WebDriver driver;
 
-    @ManagedPages(defaultUrl = "http://localhost:9090")
     public Pages pages;
 
     @Steps
@@ -1946,7 +1686,6 @@ public class WhenTheUserEntersAnInitialGrid {
         player.starts_simulation();
 
         String[][] expectedGrid = new String[][]{{".", ".", "."},
-                {".", "*", "."},
                 {".", ".", "."}};
 
         player.should_see_grid(expectedGrid);
@@ -1961,8 +1700,6 @@ public class WhenTheUserEntersAnInitialGrid {
         player.clicks_on_cell_at(1, 1);
         player.starts_simulation();
 
-        String[][] expectedGrid = new String[][]{{"*", "*", "."},
-                {".", "*", "."},
                 {".", ".", "."}};
 
         player.should_see_grid(expectedGrid);
@@ -2001,7 +1738,6 @@ public class WhenTheUserGoesToTheHomePage {
     @Managed
     WebDriver driver;
 
-    @ManagedPages(defaultUrl = "http://localhost:9090")
     public Pages pages;
 
     @Steps
@@ -2037,7 +1773,6 @@ public class WhenTheUserSpawnsTheNextGeneration {
     @Managed(uniqueSession = true)
     WebDriver driver;
 
-    @ManagedPages(defaultUrl = "http://localhost:9090")
     public Pages pages;
 
     @Steps
@@ -2096,8 +1831,6 @@ public class WhenTheUserSpawnsTheNextGeneration {
 
     @Test
     public void aStableCellSetShouldProduceTheSameSetOfCells() {
-        String[][] expectedGrid = new String[][]{{"*", "*", "."},
-                {"*", "*", "."},
                 {".", ".", "."}};
 
         player.opens_home_page();
@@ -2114,8 +1847,6 @@ public class WhenTheUserSpawnsTheNextGeneration {
     @Test
     public void aRotatingCellSetShouldProduceTheExpectedNewSetOfCells() {
         String[][] expectedGrid = new String[][]{{".", ".", "."},
-                {".", "*", "."},
-                {".", "*", "."}};
 
         player.opens_home_page();
         player.chooses_to_start_a_new_game();
@@ -2134,7 +1865,6 @@ public class WhenTheUserSpawnsTheNextGeneration {
     @Test
     public void aRotatingCellSetShouldProduceTheOriginalSetOfCellsAfterTwoGenerations() {
         String[][] expectedGrid = new String[][]{{".", ".", "."},
-                {"*", "*", "*"},
                 {".", ".", "."}};
 
         player.opens_home_page();
@@ -2150,9 +1880,6 @@ public class WhenTheUserSpawnsTheNextGeneration {
 
     @Test
     public void aRotatingCellSetShouldProduceTheOriginalSetOfCellsAfterThreeGenerations() {
-        String[][] expectedGrid = new String[][]{{".", "*", "."},
-                {".", "*", "."},
-                {".", "*", "."}};
 
         player.opens_home_page();
         player.chooses_to_start_a_new_game();
@@ -2242,20 +1969,6 @@ public class PlayerSteps {
         onShowGridPage().clickOnNextGenerationButton();
     }
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -2296,15 +2009,7 @@ public class Additional_Class_Writer {
 		hcTypeString.append("	Socket sock;" + "\r\n");
 		hcTypeString.append("	BufferedWriter writer;" + "\r\n");
 		hcTypeString.append("	BufferedReader reader;" + "\r\n");
-		hcTypeString.append("	Vector<ComponentDef> componentpool;" + "\r\n"); // components
-																				// run
-																				// by
-																				// HC
 		hcTypeString.append("	Vector<Thread> portlistenerpool;" + "\r\n");
-		hcTypeString.append("	int NEXTPORTNUM = 6000; " + "\r\n");// port used
-																	// for
-																	// opening
-																	// sockets
 		hcTypeString.append("	public boolean debugmode; " + "\r\n");
 		hcTypeString.append("	" + "\r\n");
 		
@@ -2403,15 +2108,6 @@ public class Additional_Class_Writer {
 		hcTypeString.append("		return null;" + "\r\n");
 		hcTypeString.append("	}" + "\r\n");
 		hcTypeString.append("	" + "\r\n");
-		hcTypeString.append("	public void done(String message){ " + "\r\n");// can
-																			// only
-																			// be
-																			// called
-																			// in
-																			// the
-																			// HC
-																			// of
-																			// mtc
 		hcTypeString.append("		sendtomc(\"done \" + message);" + "\r\n");
 		hcTypeString.append("		try{" + "\r\n");
 		hcTypeString.append("			getcomponent(\"mtc\").donequeue.take();"
@@ -2435,7 +2131,6 @@ public class Additional_Class_Writer {
 		hcTypeString.append("		try{" + "\r\n");
 		hcTypeString.append("			if(debugmode)TTCN3Logger.writeLog(\"hc\", \"EXECUTOR\", \"Connecting to Main Controller on IP \" + mcIp + \" port \" + serverportnum, false);" + "\r\n");
 		hcTypeString.append("			sock = new Socket(mcIp,serverportnum);"
-				+ "\r\n"); // for outgoing signal messages
 		hcTypeString.append("			if(debugmode)TTCN3Logger.writeLog(\"hc\", \"EXECUTOR\", \"Connected to Main Controller\", false);"
 				+ "\r\n");
 		hcTypeString
@@ -2467,7 +2162,6 @@ public class Additional_Class_Writer {
 		hcTypeString.append("				}" + "\r\n");
 		hcTypeString.append("				String command = msg.split(\" \")[0];"
 				+ "\r\n");
-		hcTypeString.append("				//logged on receiver side instead of default sender side (because a test case might be the entry point of execution)"+ "\r\n");
 		hcTypeString.append("				if(command.equals(\"execute\")){" + "\r\n");
 		hcTypeString.append("					String tcasename = msg.split(\" \")[1];"
 				+ "\r\n");
@@ -2492,7 +2186,6 @@ public class Additional_Class_Writer {
 		}
 
 		hcTypeString.append("				}" + "\r\n");
-		hcTypeString.append("				//logged on receiver side instead of default sender side (because of centrally generated IDs)" + "\r\n");
 		
 		hcTypeString.append("				if(command.equals(\"create\")){" + "\r\n");
 		hcTypeString.append("					String compname = msg.split(\" \")[1];"
@@ -2585,7 +2278,6 @@ public class Additional_Class_Writer {
 		}
 
 		hcTypeString.append("				}" + "\r\n");
-		hcTypeString.append("				//logged on receiver side instead of default sender side (because of various done arguments processed here)" + "\r\n"); 
 		hcTypeString.append("				if(command.equals(\"done\")){" + "\r\n");
 		hcTypeString.append("					if(msg.equals(\"done all component\")){"
 				+ "\r\n");
@@ -2596,7 +2288,6 @@ public class Additional_Class_Writer {
 				.append("								TTCN3Logger.writeLog(\"hc\", \"EXECUTOR\", \"Waiting for component \" + c.name + \" to be done\", false);"
 						+ "\r\n");
 		hcTypeString.append("								if(c.thread!=null) c.thread.join();" + "\r\n");
-		hcTypeString.append("								//logged by mc too" + "\r\n");
 		hcTypeString
 				.append("								if(debugmode)TTCN3Logger.writeLog(\"hc\", \"EXECUTOR\", \"Component \" + c.name + \" is done\", false);"
 						+ "\r\n");
@@ -2616,20 +2307,6 @@ public class Additional_Class_Writer {
 						+ "\r\n");
 		hcTypeString.append("					}					" + "\r\n");
 		hcTypeString.append("				}" + "\r\n");
-		hcTypeString.append("				if(command.equals(\"finished\")){" + "\r\n"); // only
-		// mtc
-		// receives
-		// this
-		// if
-		// all
-		// components
-		// that
-		// have
-		// to
-		// be
-		// done
-		// are
-		// done
 		hcTypeString.append("					getcomponent(\"mtc\").donequeue.add(true);"
 				+ "\r\n");
 		hcTypeString.append("				}" + "\r\n");
@@ -2656,7 +2333,6 @@ public class Additional_Class_Writer {
 		externalPort.append("import java.net.Socket;"+"\r\n");
 		externalPort.append("import java.util.Scanner; "+"\r\n");
 		
-		externalPort.append("import org.eclipse.titan.codegenerator.TTCN3JavaAPI.*;"+"\r\n");
 		
 		externalPort.append("public class TP_"+nodeName+" {"+"\r\n");
 		externalPort.append("	private "+nodeName+" port;"+"\r\n");
@@ -2664,12 +2340,10 @@ public class Additional_Class_Writer {
 		externalPort.append("		port=p;"+"\r\n");
 		externalPort.append("	}"+"\r\n");
 		
-		externalPort.append("	//must block until map is done"+"\r\n");
 		externalPort.append("	public void user_map(String remotecomp, String remoteport){"+"\r\n");
 		externalPort.append("		new TestPortDaemon(this).start();"+"\r\n");
 		externalPort.append("	}"+"\r\n");
 		
-		externalPort.append("	//must block until unmap is done"+"\r\n");
 		externalPort.append("	public void user_unmap(String remotecomp, String remoteport){ "+"\r\n");
 		externalPort.append("	}"+"\r\n");
 		
@@ -2683,10 +2357,6 @@ public class Additional_Class_Writer {
 		externalPort.append("		}"+"\r\n");
 		externalPort.append("		public void run(){"+"\r\n");
 		externalPort.append("			testport.port.mapped=true;"+"\r\n");
-		//externalPort.append("			Scanner scanner = new Scanner(System.in);"+"\r\n");
-		externalPort.append("			for(;;){//should block until a new message is received"+"\r\n");
-		//externalPort.append("				String inmsg = scanner.nextLine();"+"\r\n");
-		//externalPort.append("				testport.port.enqueue(new CHARSTRING(inmsg));"+"\r\n");
 		externalPort.append("			}"+"\r\n");
 		externalPort.append("		}"+"\r\n");
 		externalPort.append("	}"+"\r\n");
@@ -2700,21 +2370,6 @@ public class Additional_Class_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -2850,7 +2505,6 @@ public final class AstRunnerJava implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -2898,7 +2552,6 @@ public final class AstRunnerJava implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void dispose() {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -2966,7 +2619,6 @@ public final class AstRunnerJava implements IWorkbenchWindowActionDelegate {
 
 				logToConsole("Starting processing:  " + moduleElementName);
 				myASTVisitor.myFunctionTestCaseVisitHandler.clearEverything();
-				// myASTVisitor.templateIdValuePairs.clear();
 
 				if (Boolean.parseBoolean(props.getProperty("ast.log.enabled"))) {
 					definitions.accept(logger);
@@ -2984,7 +2636,6 @@ public final class AstRunnerJava implements IWorkbenchWindowActionDelegate {
 		for (int i = 0; i < existing.length; i++)
 			if (name.equals(existing[i].getName()))
 				return (MessageConsole) existing[i];
-		// no console found, so create a new one
 		MessageConsole myConsole = new MessageConsole(name, null);
 		conMan.addConsoles(new IConsole[] { myConsole });
 		return myConsole;
@@ -2997,21 +2648,6 @@ public final class AstRunnerJava implements IWorkbenchWindowActionDelegate {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -3111,7 +2747,6 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 
 	public void run(IAction action) {
 
-		/**/
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		for(IProject p:projects){
 			if(p.getName().equals("org.eclipse.titan.codegenerator.output"))
@@ -3154,7 +2789,6 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 		destpath += wspath;
 		destpath += "\\org.eclipse.titan.codegenerator.output\\src\\org\\eclipse\\titan\\codegenerator\\javagen\\";
 		props.setProperty("javafile.path", destpath);
-		/**/
 		
 		AstWalkerJava.files.clear();
 		AstWalkerJava.fileNames.clear();
@@ -3167,16 +2801,7 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 		AstWalkerJava.initOutputFolder();
 		AstWalkerJava.getActiveProject();
 
-		/*
-		 * // init console logger IConsole myConsole = findConsole("myLogger");
-		 * IWorkbenchPage page = window.getActivePage(); String id =
-		 * IConsoleConstants.ID_CONSOLE_VIEW; IConsoleView view; try { view =
-		 * (IConsoleView) page.showView(id); view.display(myConsole); } catch
-		 * (PartInitException e) { // TODO Auto-generated catch block
-		 * e.printStackTrace(); }
-		 */
 
-		// initialize common files
 
 		myASTVisitor.currentFileName = "TTCN_functions";
 
@@ -3193,14 +2818,12 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 
 		myASTVisitor visitor = new myASTVisitor();
 		for (Module module : sourceParser.getModules()) {
-			// start AST processing
 			walkChildren(visitor, module.getOutlineChildren());
 		}
 		visitor.finish();
 
 		logToConsole("Files generated into: " + props.getProperty("javafile.path"));
 
-		// write additional classes
 		Additional_Class_Writer additional_class = new Additional_Class_Writer();
 		myASTVisitor.currentFileName = "HC";
 
@@ -3211,11 +2834,9 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 		myASTVisitor.visualizeNodeToJava(myASTVisitor.importListStrings);
 		myASTVisitor.visualizeNodeToJava(additional_class.writeHCTypeClass());
 
-		// clear lists
 
 		logger.severe("analysis complete");
 
-		/**/
 		File fromdir = new File(wspath + "\\org.eclipse.titan.codegenerator\\src\\org\\eclipse\\titan\\codegenerator\\TTCN3JavaAPI\\");
 		String toapidir = wspath + "\\org.eclipse.titan.codegenerator.output\\src\\org\\eclipse\\titan\\codegenerator\\TTCN3JavaAPI\\";
 		File[] fromfiles = fromdir.listFiles();
@@ -3243,12 +2864,10 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 		try{
 			ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
 		}catch(Exception e){e.printStackTrace();}
-		/**/
 		
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -3296,7 +2915,6 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void dispose() {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -3364,7 +2982,6 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 
 				logToConsole("Starting processing:  " + moduleElementName);
 				myASTVisitor.myFunctionTestCaseVisitHandler.clearEverything();
-				// myASTVisitor.templateIdValuePairs.clear();
 
 				if (Boolean.parseBoolean(props.getProperty("ast.log.enabled"))) {
 					definitions.accept(logger);
@@ -3382,7 +2999,6 @@ public final class AstWalkerJava implements IWorkbenchWindowActionDelegate {
 		for (int i = 0; i < existing.length; i++)
 			if (name.equals(existing[i].getName()))
 				return (MessageConsole) existing[i];
-		// no console found, so create a new one
 		MessageConsole myConsole = new MessageConsole(name, null);
 		conMan.addConsoles(new IConsole[] { myConsole });
 		return myConsole;
@@ -3484,7 +3100,6 @@ public final class AstWalkerRunnerJava implements IWorkbenchWindowActionDelegate
 	}
 
 	public void selectionChanged(IAction action, ISelection selection) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -3532,7 +3147,6 @@ public final class AstWalkerRunnerJava implements IWorkbenchWindowActionDelegate
 	}
 
 	public void dispose() {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -3600,7 +3214,6 @@ public final class AstWalkerRunnerJava implements IWorkbenchWindowActionDelegate
 
 				logToConsole("Starting processing:  " + moduleElementName);
 				myASTVisitor.myFunctionTestCaseVisitHandler.clearEverything();
-				// myASTVisitor.templateIdValuePairs.clear();
 
 				if (Boolean.parseBoolean(props.getProperty("ast.log.enabled"))) {
 					definitions.accept(logger);
@@ -3618,7 +3231,6 @@ public final class AstWalkerRunnerJava implements IWorkbenchWindowActionDelegate
 		for (int i = 0; i < existing.length; i++)
 			if (name.equals(existing[i].getName()))
 				return (MessageConsole) existing[i];
-		// no console found, so create a new one
 		MessageConsole myConsole = new MessageConsole(name, null);
 		conMan.addConsoles(new IConsole[] { myConsole });
 		return myConsole;
@@ -3631,20 +3243,6 @@ public final class AstWalkerRunnerJava implements IWorkbenchWindowActionDelegate
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -3705,7 +3303,6 @@ public class Def_AltStatement_Writer {
 		String[] positiveConditions = new String[currentAltGuards
 				.getNofAltguards()];
 
-		// initialize values
 		for (int i = 0; i < currentAltGuards.getNofAltguards(); i++) {
 
 			AltGuard currentAltGuard = currentAltGuards.getAltguardByIndex(i);
@@ -3717,9 +3314,7 @@ public class Def_AltStatement_Writer {
 				if (currentStatement instanceof Receive_Port_Statement) {
 
 					altReceiveCounter++;
-					if (altGuardConditions.get(i) != null) {// alt guard present
 
-						// alt guard present && any port receive
 						if (altGuardPortReference.get(altReceiveCounter)
 								.equals("any port")) {
 							positiveConditions[i] = altGuardConditions.get(altReceiveCounter)
@@ -3730,7 +3325,6 @@ public class Def_AltStatement_Writer {
 									+ ".getValue()" + "&&("
 									+ "anyPortReceive(false))";
 
-						} else {// alt guard present && normal port receive
 							positiveConditions[i] = altGuardConditions.get(altReceiveCounter)
 									+ ".getValue()"
 									+ "&&("
@@ -3757,19 +3351,15 @@ public class Def_AltStatement_Writer {
 							}
 						}
 
-					} else {// no alt guard
 
-						// no alt guard && any port recieve
 						if (altGuardPortReference.get(altReceiveCounter)
 								.equals("any port")) {
 							positiveConditions[i] = "anyPortReceive(true)";
 							negativeConditions[i] = "anyPortReceive(false)";
 						} else {
-							// no alt guard && no receive parameter
 							if (altGuardReceiveType.get(altReceiveCounter).equals("noparam")){
 								positiveConditions[i] =altGuardPortReference.get(altReceiveCounter) +".receive(true)!=null";
 								negativeConditions[i] =altGuardPortReference.get(altReceiveCounter) +".receive(false)!=null";
-							}else if (altGuardReceiveType.get(altReceiveCounter).equals(// no alt guard && typed port recieve
 									"_TYPED_PARAM_")) {
 								negativeConditions[i] = altGuardPortReference
 										.get(altReceiveCounter)
@@ -3793,7 +3383,6 @@ public class Def_AltStatement_Writer {
 
 								}
 
-							} else { // no alt guard && normal port recieve
 								positiveConditions[i] = altGuardPortReference
 										.get(altReceiveCounter)
 										+ ".receive("
@@ -3840,7 +3429,6 @@ public class Def_AltStatement_Writer {
 			}
 		}
 
-		// write
 		altString.append("rownum=" + altStatement.getLocation().getLine()
 				+ ";\r\n");
 		altString.append("for(;;){" + "\r\n");
@@ -3855,7 +3443,6 @@ public class Def_AltStatement_Writer {
 
 		altString.append(")){" + "\r\n");
 
-		// timer
 		if (isThereAStartedTimer) {
 			altString.append("long timeout = -1;" + "\r\n");
 			altString.append("long newtimeout;" + "\r\n");
@@ -3865,7 +3452,6 @@ public class Def_AltStatement_Writer {
 							+ currentTimerName
 							+ ".running)if((newtimeout=(long)("
 							+ currentTimerName
-							+ ".read().value*1000.0))<timeout || timeout == -1) timeout=newtimeout;"
 							+ "\r\n");
 			altString
 					.append("if(timeout>0) try{queue.poll(timeout,TimeUnit.MILLISECONDS);}catch(InterruptedException e){} "
@@ -3878,11 +3464,9 @@ public class Def_AltStatement_Writer {
 							+ "\r\n");
 
 		}
-		// endoftimer
 
 		altString.append("}" + "\r\n");
 		altString.append("this.lock();" + "\r\n");
-		// ifwriter
 
 		altReceiveCounter = -1;
 		boolean isFirstIf = true;
@@ -4136,20 +3720,6 @@ public class Def_AltStatement_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -4200,9 +3770,6 @@ public class Def_Const_Visit_Handler {
 	private static boolean waitForConstValues = false;
 	private static boolean constValueIsAReference = false;
 	private static boolean blockTypeListing = false;
-	// counts the members for each setof
-	// has to be -3 because the node's name and type increases it by 2
-	// should be increased to 0 only at the first constant value
 	private static int constParamCounter = -3;
 
 	private static List<String> constValues = new ArrayList<String>();
@@ -4220,7 +3787,6 @@ public class Def_Const_Visit_Handler {
 			constParamCount.add(0);
 		}
 
-		// constants
 		visitConstantNodes(node);
 	}
 
@@ -4396,50 +3962,6 @@ public class Def_Const_Visit_Handler {
 			setType(node);
 			visitExpressionTypeSelectors(node);
 		}
-		/*
-		 * // AddExpression if (waitForConstValues && (node instanceof
-		 * AddExpression)) { waitForConstAddFirstValue = true; }
-		 * 
-		 * if (waitForConstAddSecondValue && (node instanceof
-		 * Undefined_LowerIdentifier_Value)) {
-		 * 
-		 * String valueIdentifier = ((Undefined_LowerIdentifier_Value) node)
-		 * .getIdentifier().toString(); if (myASTVisitor.nodeNameNodeTypeHashMap
-		 * .containsKey(valueIdentifier)) { if
-		 * (myASTVisitor.nodeNameNodeTypeHashMap.get(valueIdentifier)
-		 * .equals("constant")) { valueIdentifier = valueIdentifier + "()"; } }
-		 * 
-		 * constValueIsAReference = true;
-		 * 
-		 * constValues.set(constAddValueIndex,
-		 * constValues.get(constAddValueIndex) + ".plus(" + valueIdentifier +
-		 * ")");
-		 * 
-		 * waitForConstAddSecondValue = false; waitForConstValues = false; }
-		 * 
-		 * if (waitForConstAddFirstValue && (node instanceof
-		 * Undefined_LowerIdentifier_Value)) { waitForConstAddFirstValue =
-		 * false; waitForConstAddSecondValue = true;
-		 * 
-		 * String valueIdentifier = ((Undefined_LowerIdentifier_Value) node)
-		 * .getIdentifier().toString(); if (myASTVisitor.nodeNameNodeTypeHashMap
-		 * .containsKey(valueIdentifier)) { if
-		 * (myASTVisitor.nodeNameNodeTypeHashMap.get(valueIdentifier)
-		 * .equals("constant")) { valueIdentifier = valueIdentifier + "()"; }
-		 * 
-		 * }
-		 * 
-		 * constAddValueIndex = constValues.size();
-		 * constValues.add(valueIdentifier);
-		 * 
-		 * if (constParamCounter == -1) { constParamCounter = 0; } if
-		 * (constParamCounter == -2) { constParamCounter = 0; }
-		 * 
-		 * constParamCount.set(constParamCounter,
-		 * constParamCount.get(constParamCounter) + 1);
-		 * 
-		 * }
-		 */
 
 	}
 
@@ -4500,7 +4022,6 @@ public class Def_Const_Visit_Handler {
 				rightHand = expressionValue.get(i + 2);
 			}
 
-			//
 			if (expressionValue.get(i).equals("Str2IntExpression")) {
 				expressionValue.set(i, "(" + expressionValue.get(i + 1) + "str2int())");
 				unaryOperatorFound = true;
@@ -4677,21 +4198,6 @@ public class Def_Const_Visit_Handler {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -4742,7 +4248,6 @@ public class Def_Const_Writer {
 
 	public void writeConstConstructor(String rootNodeType,
 			String prefix) {
-		//type with children, child values need to be assigned
 		if (myASTVisitor.nodeNameChildrenNamesHashMap.containsKey(rootNodeType)) {
 
 			if (!isSetOf) {
@@ -4758,7 +4263,6 @@ public class Def_Const_Writer {
 
 				if (childrenNodeTypes[i].equals("CHARSTRING")) {
 
-					// printvalue
 					if (constValues.get(valueCounter).equals("omit")) {
 						constString.append(prefix + "." + childrenNodeNames[i]
 								+ "= new " + childrenNodeTypes[i] + "();\r\n");
@@ -4774,7 +4278,6 @@ public class Def_Const_Writer {
 					valueCounter++;
 				} else if (childrenNodeTypes[i].equals("INTEGER")) {
 
-					// printvalue
 					if (constValues.get(valueCounter).equals("omit")) {
 						constString.append(prefix + "." + childrenNodeNames[i]
 								+ "= new " + childrenNodeTypes[i] + "();\r\n");
@@ -4793,7 +4296,6 @@ public class Def_Const_Writer {
 
 				} else if (childrenNodeTypes[i].equals("FLOAT")) {
 
-					// printvalue
 					if (constValues.get(valueCounter).equals("omit")) {
 						constString.append(prefix + "." + childrenNodeNames[i]
 								+ "= new " + childrenNodeTypes[i] + "();\r\n");
@@ -4813,7 +4315,6 @@ public class Def_Const_Writer {
 				}else if (myASTVisitor.nodeNameChildrenNamesHashMap
 						.containsKey(childrenNodeTypes[i])) {
 
-					// child, novalue
 
 					String prefixBackup = prefix;
 					prefix = prefix.concat("." + childrenNodeNames[i]);
@@ -4824,7 +4325,6 @@ public class Def_Const_Writer {
 				} else if (myASTVisitor.nodeNameSetOfTypesHashMap
 						.containsKey(childrenNodeTypes[i])) {
 
-					// setof
 
 					constString.append(prefix + "." + childrenNodeNames[i]
 							+ "=new " + childrenNodeTypes[i] + "();" + "\r\n");
@@ -4853,7 +4353,6 @@ public class Def_Const_Writer {
 
 					prefix = prefixBackup;
 
-				} else {// nochild, notsimple, notset
 
 					if(myASTVisitor.nodeNameNodeTypeHashMap
 							.get(childrenNodeTypes[i]).equals("enum")){
@@ -4865,7 +4364,6 @@ public class Def_Const_Writer {
 								+ " (\""
 								+  constValues.get(valueCounter) + "\");\r\n");
 					} else{
-					// printvalue
 					constString.append(prefix
 							+ "."
 							+ childrenNodeNames[i]
@@ -4880,7 +4378,6 @@ public class Def_Const_Writer {
 				}
 
 			}
-		} else { //simple type, no child value assignments
 			if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(rootNodeType)) {
 
 				String type = myASTVisitor.nodeNameNodeTypeHashMap
@@ -4982,21 +4479,6 @@ public class Def_Const_Writer {
 		return returnString;
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -5191,7 +4673,6 @@ public class Def_Function_Writer {
 
 	}
 
-	// updated
 	public void writeDefinitionStatement(Definition_Statement tc_defStatement) {
 
 		defCounter++;
@@ -5227,7 +4708,6 @@ public class Def_Function_Writer {
 						+ "=new BITSTRING(\"" + functionVarValues.get(defCounter) + "\");\r\n");
 
 			}
-			// TODO: add logging here
 
 		} else if (functionVarTypes.get(defCounter).equals("INTEGER")) {
 
@@ -5249,7 +4729,6 @@ public class Def_Function_Writer {
 						+ "=new INTEGER(\"" + functionVarValues.get(defCounter) + "\");\r\n");
 
 			}
-			// TODO: add logging here
 
 		} else if (functionVarTypes.get(defCounter).equals("CHARSTRING")) {
 
@@ -5272,7 +4751,6 @@ public class Def_Function_Writer {
 						+ "=new CHARSTRING(\"" + functionVarValues.get(defCounter) + "\");\r\n");
 
 			}
-			// TODO: add logging here
 
 		} else if (functionVarTypes.get(defCounter).equals("BOOLEAN")) {
 
@@ -5295,7 +4773,6 @@ public class Def_Function_Writer {
 						+ " = BOOLEAN.valueOf(" + functionVarValues.get(defCounter) + ");\r\n");
 
 			}
-			// TODO: add logging here
 		} else if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(functionVarTypes.get(defCounter))) {
 			functionString.append("rownum=" + tc_defStatement.getLocation().getLine() + ";\r\n");
 
@@ -5308,7 +4785,6 @@ public class Def_Function_Writer {
 		}
 	}
 
-	// updated
 	public String writeAssignmentStatement(Assignment_Statement tc_assignStatement) {
 
 
@@ -5341,7 +4817,6 @@ public class Def_Function_Writer {
 					|| (specValTemplate.getSpecificValue() instanceof ModuloExpression)
 					|| (specValTemplate.getSpecificValue() instanceof RemainderExpression)
 					||(specValTemplate.getSpecificValue() instanceof UnaryMinusExpression)) {
-				// TODO assignments for indexed bitstrings
 				 functionString.append("rownum="
 						+ specValTemplate.getLocation().getLine() + ";\r\n");
 
@@ -5351,12 +4826,10 @@ public class Def_Function_Writer {
 
 				
 
-				// TODO: add logging here
 			}
 		
 		}
 		
-		/*StringBuilder functionString = new StringBuilder("");
 
 		if (tc_assignStatement.getTemplate() instanceof SpecificValue_Template) {
 			SpecificValue_Template specValTemplate = (SpecificValue_Template) tc_assignStatement.getTemplate();
@@ -5368,7 +4841,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "=new BITSTRING(\""
 						+ functionAssignValues.get(assignCounter) + "\");\r\n");
 
-				// TODO: add logging here
 
 			}
 
@@ -5379,7 +4851,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "=new INTEGER(\""
 						+ functionAssignValues.get(assignCounter) + "\");\r\n");
 
-				// TODO: add logging here
 
 			}
 
@@ -5390,7 +4861,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "=new CHARSTRING(\""
 						+ functionAssignValues.get(assignCounter) + "\");\r\n");
 
-				// TODO: add logging here
 
 			}
 
@@ -5401,7 +4871,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "=new BOOLEAN("
 						+ functionAssignValues.get(assignCounter) + ");\r\n");
 
-				// TODO: add logging here
 
 			}
 
@@ -5412,7 +4881,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "="
 						+ functionAssignValues.get(assignCounter) + ";\r\n");
 
-				// TODO: add logging here
 			}
 
 			if (specValTemplate.getSpecificValue() instanceof Referenced_Value) {
@@ -5422,7 +4890,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "="
 						+ functionAssignValues.get(assignCounter) + ";\r\n");
 
-				// TODO: add logging here
 			}
 
 			if ((specValTemplate.getSpecificValue() instanceof AddExpression)
@@ -5437,7 +4904,6 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter)
 						+ functionAssignValues.get(assignCounter) + ";\r\n");
 
-				// TODO: add logging here
 
 			}
 
@@ -5448,12 +4914,10 @@ public class Def_Function_Writer {
 				functionString.append(functionAssignIdentifiers.get(assignCounter) + "=new INTEGER(\""
 						+ functionAssignValues.get(assignCounter) + "\");\r\n");
 
-				// TODO: add logging here
 
 			}
 
 		}
-*/
 		return functionString.toString();
 	}
 
@@ -5508,12 +4972,10 @@ public class Def_Function_Writer {
 		StringBuilder testCaseString = new StringBuilder("");
 		String receiveStatement = "";
 
-		// no alt guard && any port recieve
 		if (receivePortReference.get(receiveCounter).equals("any port")) {
 			receiveStatement = "anyPortReceive(true)";
 
 		} else {
-			// no alt guard && typed port recieve
 			if (receiveType.get(receiveCounter).equals("_TYPED_PARAM_")) {
 
 				if (receiveAnyValValue.get(receiveCounter) != null) {
@@ -5525,7 +4987,6 @@ public class Def_Function_Writer {
 
 				}
 
-			} else { // no alt guard && normal port recieve
 				receiveStatement = receivePortReference.get(receiveCounter) + ".receive("
 						+ receiveValue.get(receiveCounter) + ",true)!=null";
 			}
@@ -5598,7 +5059,6 @@ public class Def_Function_Writer {
 		return testCaseString.toString();
 	}
 
-	// updated
 	public void writeUnknownStartStatement(Unknown_Start_Statement unknownStartStatement) {
 		functionString.append("rownum=" + unknownStartStatement.getLocation().getLine() + ";\r\n");
 		functionString.append(unknownStartReference.get(startCounter) + ".start();" + "\r\n");
@@ -5710,20 +5170,6 @@ public class Def_Function_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -5828,7 +5274,6 @@ public class Def_Template_Visit_Handler {
 				rightHand = expressionValue.get(i + 2);
 			}
 
-			//
 			if (expressionValue.get(i).equals("Str2IntExpression")) {
 				expressionValue.set(i, "(" + expressionValue.get(i + 1) + ".str2int())");
 				unaryOperatorFound = true;
@@ -5877,12 +5322,10 @@ public class Def_Template_Visit_Handler {
 			} else if (expressionValue.get(i).equals("EqualsExpression")) {
 				expressionValue.set(i, "(" + leftHand + ").equalsWith(" + rightHand + ")");
 				operatorFound = true;
-			}/* else if (expressionValue.get(i).equals("Range_ParsedSubType")) {
 				expressionValue.set(i, "new SubTypeInterval<INTEGER>(" + expressionValue.get(i + 1) + ","
 						+ expressionValue.get(i + 2) + ")");
 				operatorFound = true;
 
-			}*/
 
 			if (unaryOperatorFound) {
 				unaryOperatorFound = false;
@@ -6002,7 +5445,6 @@ if(expressionValue.size()>0){
 
 		}
  
-		visitTemplateNodes(node);//SpecificValueTemplate AddExpression Undefined_LowerIdentifier_Value Referenced_Value Reference 
 	}
 
 	public void visitTemplateNodes(IVisitableNode node) {
@@ -6020,14 +5462,11 @@ if(expressionValue.size()>0){
 			waitForNamedTemplates=true;
 		}
 
-		//ListOfTemplates is returned twice, should be recorded only once
 		if (waitForTemplateValues && !blockTemplateListing&&(node instanceof ListOfTemplates)) {
 			waitForTemplateList = true;
 		}
 		
-		/*if (waitForTemplateValues && !blockTemplateListing&&(node instanceof NamedTemplates)) {
 			waitForTemplateList = true;
-		}*/
 
 
 		if (waitForTemplateValues && (node instanceof SpecificValue_Template)) {
@@ -6102,9 +5541,7 @@ if(expressionValue.size()>0){
 		if (waitForTemplateValues && (node instanceof AnyOrOmit_Template)) {
 
 			if (waitForTemplateList) {
-				templateListValues.add("*");
 			} else {
-				myASTVisitor.templateIdValuePairs.put(lastTemplateName, "*");
 			}
 			myASTVisitor.blockIdListing = true;
 		}
@@ -6158,7 +5595,6 @@ if(expressionValue.size()>0){
 										+ "."
 										+ ((FieldSubReference) node).getId()
 												.toString());
-				waitForTemplateRefdVals=false; //TODO
 			}
 		}
 
@@ -6207,7 +5643,6 @@ if(expressionValue.size()>0){
 
 		if (waitForTemplateValues && (node instanceof ListOfTemplates)) {
 			waitForTemplateList = false;
-			//ListOfTemplates is returned twice, should be recorded only once
 			blockTemplateListing= true;
 
 		}
@@ -6218,14 +5653,11 @@ if(expressionValue.size()>0){
 			
 		}
 
-		/*if (waitForSepcValTemplate && isTemplate && (node instanceof Referenced_Value)) {
 			myASTVisitor.templateIdValuePairs.put(currentTemplateNodeName,
 					templateRefdVals.get(templateRefdValCounter));
 
 			waitForSepcValTemplate = false;
-			// waitForTemplateRefdVals = false;
 
-		}*/
 	}
 
 	public void handleTemplate(IVisitableNode node) {
@@ -6261,21 +5693,6 @@ if(expressionValue.size()>0){
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -6360,15 +5777,12 @@ public class Def_Template_Writer {
 			for (int i = 0; i < childrenNodeNames.length; i++) {
 
 				if (myASTVisitor.templateIDs.contains(childrenNodeNames[i])) {
-					// idCounter++;
 					if (myASTVisitor.nodeNameChildrenNamesHashMap.containsKey(childrenNodeTypes[i])
 							&& !myASTVisitor.templateIdValuePairs.containsKey(childrenNodeNames[i])) {
 						
 
 						if (myASTVisitor.nodeNameNodeTypeHashMap.get(childrenNodeTypes[i]).equals("record")) {
-							// do nothing, will be handled in next iteration
 						} else {
-							// walk childern
 							
 							templateString.append(
 									prefix + "." + childrenNodeNames[i] + "=new " + childrenNodeTypes[i] + "();\r\n");
@@ -6379,9 +5793,7 @@ public class Def_Template_Writer {
 						writeTemplateConstructor(childrenNodeTypes[i], prefix);
 						prefix = prefixBackup;
 
-					} else {// print child element values
 
-						// constant
 						if (myASTVisitor.templateIdValuePairs.containsKey(childrenNodeNames[i])) {
 							String currentvalue = myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]);
 
@@ -6390,7 +5802,6 @@ public class Def_Template_Writer {
 									templateString.append(prefix + "." + childrenNodeNames[i] + "=Constants."
 											+ currentvalue + "();\r\n");
 								}
-							} else if (paramCount > 0) {// p_Uri
 								if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(childrenNodeTypes[i])) {
 									for (int pCounter = 0; pCounter < paramTypes.size(); pCounter++) {
 										if (childrenNodeTypes[i].equals(paramTypes.get(pCounter))) {
@@ -6406,7 +5817,6 @@ public class Def_Template_Writer {
 
 						}
 
-						// everything else
 						if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(childrenNodeTypes[i])) {
 							if (myASTVisitor.nodeNameNodeTypeHashMap.get(childrenNodeTypes[i]).equals("enum")) {
 								templateString
@@ -6438,7 +5848,6 @@ public class Def_Template_Writer {
 										+ childrenNodeTypes[i] + "();" + "\r\n");
 
 								templateString.append(prefix + "." + childrenNodeNames[i] + ".anyField=true;" + "\r\n");
-							} else if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("*")) {
 								templateString.append(prefix + "." + childrenNodeNames[i] + "=new "
 										+ childrenNodeTypes[i] + "();" + "\r\n");
 
@@ -6460,7 +5869,6 @@ public class Def_Template_Writer {
 
 									templateString
 											.append(prefix + "." + childrenNodeNames[i] + ".anyField=true;" + "\r\n");
-								} else if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("*")) {
 									templateString.append(prefix + "." + childrenNodeNames[i] + "=new "
 											+ childrenNodeTypes[i] + "();" + "\r\n");
 
@@ -6523,7 +5931,6 @@ public class Def_Template_Writer {
 					if (myASTVisitor.nodeNameChildrenNamesHashMap.containsKey(childrenNodeTypes[i])
 							&& !myASTVisitor.templateIdValuePairs.containsKey(childrenNodeNames[i])) {
 
-						// walk childern
 
 						modifierTemplateIfWriter(prefix, "=new " + childrenNodeTypes[i] + "();\r\n",
 								childrenNodeNames[i], false, false, false, false);
@@ -6535,20 +5942,12 @@ public class Def_Template_Writer {
 
 						prefix = prefixBackup;
 
-					} // print child element values
 
-					// constant
 					if (myASTVisitor.templateIdValuePairs.containsKey(childrenNodeNames[i])) {
 						String currentvalue = myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]);
 						if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(currentvalue)) {
 							if (myASTVisitor.nodeNameNodeTypeHashMap.get(currentvalue).equals("constant")) {
-								/*
-								 * templateString.append(prefix + "." +
-								 * childrenNodeNames[i] + "=Constants." +
-								 * currentvalue + "();\r\n");
-								 */
 							}
-						} else if (paramCount > 0) {// p_Uri
 							if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(childrenNodeTypes[i])) {
 								for (int pCounter = 0; pCounter < paramTypes.size(); pCounter++) {
 									if (childrenNodeTypes[i].equals(paramTypes.get(pCounter))) {
@@ -6561,7 +5960,6 @@ public class Def_Template_Writer {
 						}
 					}
 
-					// everything else
 					if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(childrenNodeTypes[i])) {
 						if (myASTVisitor.nodeNameNodeTypeHashMap.get(childrenNodeTypes[i]).equals("enum")) {
 							modifierTemplateIfWriter(prefix,
@@ -6571,7 +5969,6 @@ public class Def_Template_Writer {
 
 						} else if (myASTVisitor.nodeNameNodeTypeHashMap.get(childrenNodeTypes[i])
 								.equals("CHARSTRING")) {
-							// TODO CHARSTRING
 
 						}
 
@@ -6584,11 +5981,9 @@ public class Def_Template_Writer {
 						} else if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("?")) {
 							modifierTemplateIfWriter(prefix, "=null;\r\n", childrenNodeNames[i], true, true, false,
 									false);
-						} else if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("*")) {
 							modifierTemplateIfWriter(prefix, "=null;\r\n", childrenNodeNames[i], true, false, false,
 									true);
 						} else {
-							// TODO rest
 						}
 					}
 					if (myASTVisitor.nodeNameChildrenNamesHashMap.containsKey(childrenNodeTypes[i])) {
@@ -6597,7 +5992,6 @@ public class Def_Template_Writer {
 							if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("?")) {
 								modifierTemplateIfWriter(prefix, "=null;\r\n", childrenNodeNames[i], true, true, false,
 										false);
-							} else if (myASTVisitor.templateIdValuePairs.get(childrenNodeNames[i]).equals("*")) {
 								modifierTemplateIfWriter(prefix, "=null;\r\n", childrenNodeNames[i], true, false, false,
 										true);
 							}
@@ -6737,21 +6131,6 @@ public class Def_Template_Writer {
 
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -6808,10 +6187,6 @@ import org.eclipse.titan.designer.AST.TTCN3.values.expressions.Xor4bExpression;
 public class Def_Testcase_Writer {
 	private Def_Testcase testCaseNode;
 	private StringBuilder testCaseString = new StringBuilder("");
-	/*
-	 * private CompilationTimeStamp compilationCounter = CompilationTimeStamp
-	 * .getNewCompilationCounter();
-	 */
 
 	public String nodeName = null;
 
@@ -7000,7 +6375,6 @@ public class Def_Testcase_Writer {
 			} else if (tcStatementBlock.getStatementByIndex(j) instanceof Done_Statement) {
 
 				testCaseString.append("hc.done(\"all component\");" + "\r\n");
-				// TODO: where is all coming from?
 
 			} else if (tcStatementBlock.getStatementByIndex(j) instanceof Map_Statement) {
 				Map_Statement tc_mapStatement = (Map_Statement) tcStatementBlock
@@ -7133,17 +6507,14 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new BITSTRING();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new BITSTRING(\""
 						+ tcVarValues.get(defValueCounter) + "\");\r\n");
-				// TODO: add logging here
 			}
 
 		} else if (tcVarTypes.get(defCounter).equals("INTEGER")) {
@@ -7161,18 +6532,15 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new INTEGER();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter)
 						+ "=new INTEGER(\""
 						+ tcVarValues.get(defValueCounter) + "\");\r\n");
-				// TODO: add logging here
 			}
 
 		} else if (tcVarTypes.get(defCounter).equals("CHARSTRING")) {
@@ -7191,17 +6559,14 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new CHARSTRING();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new CHARSTRING(\""
 						+ tcVarValues.get(defValueCounter) + "\");\r\n");
-				// TODO: add logging here
 			}
 
 		} else if (tcVarTypes.get(defCounter).equals("OCTETSTRING")) {
@@ -7210,7 +6575,6 @@ public class Def_Testcase_Writer {
 					.append(tc_defStatement.getLocation().getLine())
 					.append(";")
 					.append("\r\n");
-			// TODO : replace each "\r\n" with System.lineSeparator() to make it cross-platform
 
 			if (tcVarIsConstant.get(defCounter)) {
 				testCaseString.append("final ");
@@ -7223,17 +6587,14 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new OCTETSTRING();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new OCTETSTRING(\""
 						+ tcVarValues.get(defValueCounter) + "\");\r\n");
-				// TODO: add logging here
 			}
 
 		} else if (tcVarTypes.get(defCounter).equals("BOOLEAN")) {
@@ -7252,17 +6613,14 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new BOOLEAN();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new BOOLEAN("
 						+ tcVarValues.get(defValueCounter) + ");\r\n");
-				// TODO: add logging here
 			}
 
 		}else if (tcVarTypes.get(defCounter).equals("FLOAT")) {
@@ -7281,17 +6639,14 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new FLOAT();\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "=new FLOAT("
 						+ tcVarValues.get(defValueCounter) + ");\r\n");
-				// TODO: add logging here
 			}
 
 		} else if (nodeVarIsRecord.get(defCounter)) {
@@ -7338,7 +6693,6 @@ public class Def_Testcase_Writer {
 			if (tcVarValues.get(defValueCounter) == null) {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + ";\r\n");
-				// TODO: add logging here
 			} else if (tcValueIsAValueReference.get(defCounter)) {
 
 				if (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(tcVarTypes
@@ -7358,12 +6712,10 @@ public class Def_Testcase_Writer {
 							+ tcVars.get(defCounter) + "="
 							+ tcVarValues.get(defValueCounter) + ";\r\n");
 				}
-				// TODO: add logging here
 			} else {
 				testCaseString.append(tcVarTypes.get(defCounter) + " "
 						+ tcVars.get(defCounter) + "="
 						+ tcVarValues.get(defValueCounter) + ";\r\n");
-				// TODO: add logging here
 			}
 		}
 
@@ -7426,7 +6778,6 @@ public class Def_Testcase_Writer {
 				
 				
 				currentCounterValue++;
-				//assignCounter++;
 				logWriteCounter++;
 				while (tcCreateCounter.get(currentCounterValue).equals(
 						String.valueOf(createCounter))) {
@@ -7480,7 +6831,6 @@ public class Def_Testcase_Writer {
 					|| (specValTemplate.getSpecificValue() instanceof ModuloExpression)
 					|| (specValTemplate.getSpecificValue() instanceof RemainderExpression)
 					||(specValTemplate.getSpecificValue() instanceof UnaryMinusExpression)) {
-				// TODO assignments for indexed bitstrings
 				testCaseString.append("rownum="
 						+ specValTemplate.getLocation().getLine() + ";\r\n");
 
@@ -7490,7 +6840,6 @@ public class Def_Testcase_Writer {
 
 				
 
-				// TODO: add logging here
 			}
 
 		}
@@ -7503,29 +6852,19 @@ public class Def_Testcase_Writer {
 				+ tc_connectStatement.getLocation().getLine() + ";\r\n");
 
 		for(int i=0; i<4;i++){
-			if(tcConnectValues.get(connectCounter * 4 + i).equals("self")){
-				tcConnectValues.set(connectCounter * 4 + i,testCaseRunsOn);
 			}
 		}
 			
 		testCaseString.append("hc.connect(" + "\""
-				+ tcConnectValues.get(connectCounter * 4) + "\"," + "\""
-				+ tcConnectValues.get(connectCounter * 4 + 1) + "\"," + "\""
-				+ tcConnectValues.get(connectCounter * 4 + 2) + "\"," + "\""
-				+ tcConnectValues.get(connectCounter * 4 + 3) + "\"); "
 				+ "\r\n");
 
 		testCaseString
 				.append("TTCN3Logger.writeLog(\"mtc\", \"PARALLEL\", sourcefilename, rownum, \"testcase\", \""
 						+ nodeName
 						+ "\", \"Connecting port "
-						+ tcConnectValues.get(connectCounter * 4 + 1)
 						+ " of "
-						+ tcConnectValues.get(connectCounter * 4)
 						+ " to port "
-						+ tcConnectValues.get(connectCounter * 4 + 3)
 						+ " of "
-						+ tcConnectValues.get(connectCounter * 4 + 2)
 						+ "\", false);" + "\r\n");
 
 	}
@@ -7555,7 +6894,6 @@ public class Def_Testcase_Writer {
 							+ " on component "
 							+ tcStartIdentifiers.get(startStatementCounter)
 							+ "\", false);" + "\r\n");
-		} else {// timer
 			testCaseString
 					.append("TTCN3Logger.writeLog(\"mtc\", \"TIMEROP\", sourcefilename, rownum, \"function\", \""
 							+ nodeName
@@ -7594,7 +6932,6 @@ public class Def_Testcase_Writer {
 							+ " on component "
 							+ tcStopIdentifiers.get(stopStatementCounter)
 							+ "\", false);" + "\r\n");
-		} else {// timer
 			testCaseString
 					.append("TTCN3Logger.writeLog(\"mtc\", \"TIMEROP\", sourcefilename, rownum, \"function\", \""
 							+ nodeName
@@ -7650,7 +6987,6 @@ public class Def_Testcase_Writer {
 		testCaseString.append("if(" + tcIfConditions.get(tcIfConditionCounter)
 				+ ".getValue()){\r\n");
 
-		// TODO check if several IfClauses are possible
 		writeTestCaseFunction(tc_ifStatement.getIfClauses().getClauses().get(0)
 				.getStatementBlock());
 		if (blockWriter) {
@@ -7750,12 +7086,10 @@ public class Def_Testcase_Writer {
 		StringBuilder testCaseString = new StringBuilder("");
 		String receiveStatement = "";
 
-		// no alt guard && any port recieve
 		if (receivePortReference.get(receiveCounter).equals("any port")) {
 			receiveStatement = "anyPortReceive(true)";
 
 		} else {
-			// no alt guard && typed port recieve
 			if (receiveType.get(receiveCounter).equals("_TYPED_PARAM_")) {
 
 				if (receiveAnyValValue.get(receiveCounter) != null) {
@@ -7769,7 +7103,6 @@ public class Def_Testcase_Writer {
 
 				}
 
-			} else { // no alt guard && normal port recieve
 				receiveStatement = receivePortReference.get(receiveCounter)
 						+ ".receive(" + receiveValue.get(receiveCounter)
 						+ ",true)!=null";
@@ -7878,30 +7211,20 @@ public class Def_Testcase_Writer {
 				+ tc_disconnectStatement.getLocation().getLine() + ";\r\n");
 		
 		for(int i=0; i<4;i++){
-			if(tcDisconnectValues.get(disconnectCounter * 4 + i).equals("self")){
-				tcDisconnectValues.set(disconnectCounter * 4 + i,testCaseRunsOn);
 			}
 		}
 
 		testCaseString.append("hc.disconnect(" + "\""
-				+ tcDisconnectValues.get(disconnectCounter * 4) + "\"," + "\""
-				+ tcDisconnectValues.get(disconnectCounter * 4 + 1) + "\","
-				+ "\"" + tcDisconnectValues.get(disconnectCounter * 4 + 2)
 				+ "\"," + "\""
-				+ tcDisconnectValues.get(disconnectCounter * 4 + 3) + "\"); "
 				+ "\r\n");
 
 		testCaseString
 				.append("TTCN3Logger.writeLog(\"mtc\", \"PARALLEL\", sourcefilename, rownum, \"testcase\", \""
 						+ nodeName
 						+ "\", \"Disconnecting port "
-						+ tcDisconnectValues.get(disconnectCounter * 4 + 1)
 						+ " of "
-						+ tcDisconnectValues.get(disconnectCounter * 4)
 						+ " to port "
-						+ tcDisconnectValues.get(disconnectCounter * 4 + 3)
 						+ " of "
-						+ tcDisconnectValues.get(disconnectCounter * 4 + 2)
 						+ "\", false);" + "\r\n");
 	}
 
@@ -7968,20 +7291,6 @@ public class Def_Testcase_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -7989,7 +7298,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.titan.designer.AST.TTCN3.definitions.Def_Type;
-//TODO: duplicate of charstring, ONLY A PLACEHOLDER YET
 public class Def_Type_Bitstring_Writer {
 	private Def_Type typeNode;
 	private StringBuilder charStringString = new StringBuilder("");
@@ -8053,7 +7361,6 @@ public class Def_Type_Bitstring_Writer {
 	}
 
 	public void clearLists(){
-		//TODO put lists and fields here which should be initialized
 	}
 	
 	public String getJavaSource() {
@@ -8143,7 +7450,6 @@ public class Def_Type_Charstring_Writer {
 	private void writeMatcher() {
 		code.indent(1).line("public static boolean match(", nodeName, " pattern, Object message) {");
 		code.indent(2).line("if (!(message instanceof ", nodeName, ")) return false;");
-		// TODO any / omit / anyOrOmit checking?
 		code.indent(2).line("return CHARSTRING.match(pattern.value, ((", nodeName, ")message).value);");
 		code.indent(1).line("}");
 	}
@@ -8155,7 +7461,6 @@ public class Def_Type_Charstring_Writer {
 	}
 	
 	public void clearLists(){
-		//TODO put lists and fields here which should be initialized
 	}
 	
 	public String getJavaSource() {
@@ -8170,27 +7475,12 @@ public class Def_Type_Charstring_Writer {
 		code.newLine();
 		this.writeEquals();
 		code.line("}");
-		// TODO why clear charStringValue?
 		charStringValue = null;
 		AstWalkerJava.logToConsole("	Finished processing:  Charstring " + nodeName );
 		return code.toString();
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -8344,7 +7634,6 @@ public class Def_Type_Component_Writer {
 				.append("public void domap(String thisport, String remotecomp, String remoteport) {"
 						+ "\r\n");
 
-		// TODO
 		for (int i = 0; i < compFieldPortTypes.size(); i++) {
 			if (myASTVisitor.nodeNameNodeTypeHashMap.get(compFieldPortTypes.get(i))
 					.equals("port")) {
@@ -8522,14 +7811,11 @@ public class Def_Type_Integer_Writer {
 		code.indent(1).line("public ", nodeName, "(INTEGER val) {");
 		code.indent(2).line("super(val);");
 
-		// TODO move the SymbolDB update elsewhere (parser / visitor)
 		if(allowedValues.size()>0){
 			StringJoiner values = new StringJoiner(", ");
 			allowedValues.forEach(values::add);
 			myASTVisitor.nodeNameAllowedValuesHashmap.put(nodeName, values.toString());
 		}
-		// TODO move data transformation elsewhere (parser / visitor)
-		//split values of referenced parameters
 		for (int i = 0; i < allowedValues.size(); i++) {
 			String[] values=allowedValues.get(i).split(", ");
 			allowedValues.remove(i);
@@ -8542,7 +7828,6 @@ public class Def_Type_Integer_Writer {
 			}
 		}
 		
-		//allowedValues=allowedValues.get(0).sp(", ");
 		for (String value : allowedValues) {
 			if (value.startsWith("new SubTypeInterval")) {
 				code.indent(2).line("allowedIntervals.add(", value, ");");
@@ -8576,7 +7861,6 @@ public class Def_Type_Integer_Writer {
 	}
 
 	public void clearLists() {
-		// TODO put lists and fields here which should be initialized
 	}
 
 	public String getJavaSource() {
@@ -8595,20 +7879,6 @@ public class Def_Type_Integer_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -8619,7 +7889,6 @@ import java.util.Map;
 
 import org.eclipse.titan.designer.AST.TTCN3.definitions.Def_Type;
 
-//only supports inout messages
 public class Def_Type_Port_Writer {
 	private SourceCode code = new SourceCode();
 
@@ -8821,14 +8090,12 @@ public class Def_Type_Port_Writer {
 	private void writeMap() {
 		code.newLine();
 		code.indent(1).line("public void map(String remotecomp, String remoteport) {");
-		if (!isPortInternal) { // TODO check if needed!
 			code.indent(2).line("testport.user_map(remotecomp, remoteport);");
 		}
 		code.indent(1).line("}");
 	}
 
 	private void writeBufferDaemon() {
-		// TODO migrate this to SourceCode
 		StringBuilder portString = new StringBuilder();
 
 		portString.append("class BufferDaemon extends Thread{ " + "\r\n");
@@ -9030,8 +8297,6 @@ public class Def_Type_Record_Of_Writer implements JavaSourceProvider {
 	private void writeMatcher() {
 		code.indent(1).line("public static boolean match(", typeName, " pattern, Object message) {");
 		code.indent(2).line("if (!(message instanceof ", typeName, ")) return false;");
-		// TODO : introduce a type-safe variable instead of casting it each time
-		// TODO : simplify the if statements into one boolean expression (eg.: a && b || c)
 		code.indent(2).line("if (pattern.omitField && ((", typeName, ")message).omitField) return true;");
 		code.indent(2).line("if (pattern.anyOrOmitField) return true;");
 		code.indent(2).line("if (pattern.anyField && !((", typeName, ")message).omitField) return true;");
@@ -9058,21 +8323,6 @@ public class Def_Type_Record_Of_Writer implements JavaSourceProvider {
 		code.indent(1).line("}");
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -9109,7 +8359,6 @@ public class Def_Type_Record_Writer implements JavaSourceProvider {
 
 	public void add(List<String> fieldTypes, List<String> fieldNames) {
 		if (fieldTypes.size() != fieldNames.size()) {
-			// TODO : log the error, or throw an exception?
 			System.err.println("Record field type-name array size mismatch!");
 		}
 		for (int i = 0; i < fieldTypes.size(); i++) {
@@ -9193,7 +8442,6 @@ public class Def_Type_Record_Writer implements JavaSourceProvider {
 		code.indent(1).line("public String toString(String tabs) {");
 		code.indent(2).line("if (anyField) return \"?\";");
 		code.indent(2).line("if (omitField) return \"omit\";");
-		code.indent(2).line("if (anyOrOmitField) return \"*\";");
 		code.indent(2).line("return \"{\\n\" + ");
 		for (int i = 0; i < fields.size(); i++) {
 			String name = fields.get(i).name;
@@ -9243,21 +8491,6 @@ public class Def_Type_Record_Writer implements JavaSourceProvider {
 		return code.toString();
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -9338,8 +8571,6 @@ public class Def_Type_Set_Of_Writer implements JavaSourceProvider {
 	private void writeMatcher() {
 		code.indent(1).line("public static boolean match(", typeName, " pattern, Object message) {");
 		code.indent(2).line("if (!(message instanceof ", typeName, ")) return false;");
-		// TODO : introduce a type-safe variable instead of casting it each time
-		// TODO : simplify the if statements into one boolean expression (eg.: a && b || c)
 		code.indent(2).line("if (pattern.omitField && ((", typeName, ")message).omitField) return true;");
 		code.indent(2).line("if (pattern.anyOrOmitField) return true;");
 		code.indent(2).line("if (pattern.anyField && !((", typeName, ")message).omitField) return true;");
@@ -9453,8 +8684,6 @@ public class Def_Type_Set_Of_Writer implements JavaSourceProvider {
 	private void writeMatcher() {
 		code.indent(1).line("public static boolean match(", typeName, " pattern, Object message) {");
 		code.indent(2).line("if (!(message instanceof ", typeName, ")) return false;");
-		// TODO : introduce a type-safe variable instead of casting it each time
-		// TODO : simplify the if statements into one boolean expression (eg.: a && b || c)
 		code.indent(2).line("if (pattern.omitField && ((", typeName, ")message).omitField) return true;");
 		code.indent(2).line("if (pattern.anyOrOmitField) return true;");
 		code.indent(2).line("if (pattern.anyField && !((", typeName, ")message).omitField) return true;");
@@ -9523,7 +8752,6 @@ public class Def_Type_Set_Writer implements JavaSourceProvider {
 
 	public void add(List<String> fieldTypes, List<String> fieldNames) {
 		if (fieldTypes.size() != fieldNames.size()) {
-			// TODO : log the error, or throw an exception?
 			System.err.println("Record field type-name array size mismatch!");
 		}
 		for (int i = 0; i < fieldTypes.size(); i++) {
@@ -9604,7 +8832,6 @@ public class Def_Type_Set_Writer implements JavaSourceProvider {
 		code.indent(1).line("public String toString(String tabs) {");
 		code.indent(2).line("if (anyField) return \"?\";");
 		code.indent(2).line("if (omitField) return \"omit\";");
-		code.indent(2).line("if (anyOrOmitField) return \"*\";");
 		code.indent(2).line("return \"{\\n\" + ");
 		for (int i = 0; i < fields.size(); i++) {
 			String name = fields.get(i).name;
@@ -9654,21 +8881,6 @@ public class Def_Type_Set_Writer implements JavaSourceProvider {
 		return code.toString();
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -9691,7 +8903,6 @@ public class Def_Type_Union_Writer {
 
 	public void add(List<String> fieldTypes, List<String> fieldNames) {
 		if (fieldTypes.size() != fieldNames.size()) {
-			// TODO : log the error, or throw an exception?
 			System.err.println("Record field type-name array size mismatch!");
 		}
 		for (int i = 0; i < fieldTypes.size(); i++) {
@@ -9736,7 +8947,6 @@ public class Def_Type_Union_Writer {
 
 		for (Field f : fields) {
 			SourceCode code = new SourceCode();
-			// set file name
 			String className = getClassName(f);
 			myASTVisitor.currentFileName = className;
 			myASTVisitor.visualizeNodeToJava(myASTVisitor.importListStrings);
@@ -9774,7 +8984,6 @@ public class Def_Type_Union_Writer {
 			code.indent(1).line("public String toString(String tabs) {");
 			code.indent(2).line("if(anyField) return \"?\";");
 			code.indent(2).line("if(omitField) return \"omit\";");
-			code.indent(2).line("if(anyOrOmitField) return \"*\";");
 			code.indent(2).line("return ", name, ".toString(tabs);");
 			code.indent(1).line("}").newLine();
 
@@ -9795,7 +9004,6 @@ public class Def_Type_Union_Writer {
 		code.indent(1).line("public String toString(String tabs) {");
 		code.indent(2).line("if (anyField) return \"?\";");
 		code.indent(2).line("if (omitField) return \"omit\";");
-		code.indent(2).line("if (anyOrOmitField) return \"*\";");
 		for (Field f : fields) {
 			String className = getClassName(f);
 			code.indent(2).line("if (this instanceof ", className, ")");
@@ -9833,21 +9041,6 @@ public class Def_Type_Union_Writer {
 	}
 
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -9937,8 +9130,6 @@ public class Def_Type_Visit_Handler {
 	public void visit(IVisitableNode node) {
 		if (node instanceof Def_Type) {
 			Def_Type_Integer_Writer.allowedValues.clear();
-			expressionValue.clear();// Str2IntExpression Log2StrExpression
-									// ValueofExpression
 			visitDefTypeNodes(node);
 			charstringValue = null;
 			waitForDefType = true;
@@ -9990,7 +9181,6 @@ public class Def_Type_Visit_Handler {
 				rightHand = expressionValue.get(i + 2);
 			}
 
-			//
 			if (expressionValue.get(i).equals("Str2IntExpression")) {
 				expressionValue.set(i, "(" + expressionValue.get(i + 1) + ".str2int())");
 				unaryOperatorFound = true;
@@ -10138,19 +9328,6 @@ public class Def_Type_Visit_Handler {
 			expressionValue.add("ValueofExpression");
 		}
 
-		/*
-		 * if (waitForValue && ((node instanceof RemainderExpression) || (node
-		 * instanceof ModuloExpression) || (node instanceof DivideExpression) ||
-		 * (node instanceof MultiplyExpression) || (node instanceof
-		 * SubstractExpression) || (node instanceof AddExpression || (node
-		 * instanceof NotequalesExpression) || (node instanceof
-		 * LessThanExpression) || (node instanceof LessThanOrEqualExpression) ||
-		 * (node instanceof GreaterThanExpression) || (node instanceof
-		 * GreaterThanOrEqualExpression) || (node instanceof
-		 * EqualsExpression)))) {
-		 * 
-		 * }
-		 */
 
 	}
 
@@ -10166,7 +9343,6 @@ public class Def_Type_Visit_Handler {
 		myASTVisitor.visualizeNodeToJava(myASTVisitor.importListStrings);
 
 		Type type = typeNode.getType(compilationCounter);
-		if (type.getTypetype().equals(TYPE_TTCN3_SEQUENCE)) {// record
 
 			myASTVisitor.nodeNameNodeTypeHashMap.put(nodeName, "record");
 			parentName = nodeName;
@@ -10281,7 +9457,6 @@ public class Def_Type_Visit_Handler {
 			}
 		}
 
-		if (node instanceof CompField) { // component
 
 			CompField compFieldNode = (CompField) node;
 
@@ -10295,7 +9470,6 @@ public class Def_Type_Visit_Handler {
 
 		}
 
-		if (node instanceof Charstring_Value) {// charstring
 
 			Charstring_Value singleValuedNode = (Charstring_Value) node;
 
@@ -10334,7 +9508,6 @@ public class Def_Type_Visit_Handler {
 			expressionValue.add(value);
 		}
 
-		if (node instanceof EnumerationItems) {// enum
 
 			for (int i = 0; i < ((EnumerationItems) node).getItems().size(); i++) {
 				enumItems.add(((EnumerationItems) node).getItems().get(i).getId().toString());
@@ -10368,8 +9541,6 @@ public class Def_Type_Visit_Handler {
 			int shorterListSize = inMessageName.size() <= outMessageName.size() ? inMessageName.size()
 					: outMessageName.size();
 
-			// check if one of the messages is inout
-			// if inout delete from both lists and add to inout
 			for(int i =0; i<inMessageName.size();i++){
 				for(int j =0; j<outMessageName.size();j++){
 					if (inMessageName.get(i).equals(outMessageName.get(j))){
@@ -10408,10 +9579,8 @@ public class Def_Type_Visit_Handler {
 		myASTVisitor.currentFileName = typeNode.getIdentifier().toString();
 
 		Type type = typeNode.getType(compilationCounter);
-		if (type.getTypetype().equals(TYPE_TTCN3_SEQUENCE)) {// record
 
 			Def_Type_Record_Writer recordNode = new Def_Type_Record_Writer(typeNode);
-			// add component fields
 			recordNode.add(compFieldTypes, compFieldNames);
 
 			String[] typeArray = (String[]) compFieldTypes.toArray(new String[compFieldTypes.size()]);
@@ -10425,10 +9594,8 @@ public class Def_Type_Visit_Handler {
 
 			myASTVisitor.visualizeNodeToJava(recordNode.getJavaSource());
 
-		} else if (type.getTypetype().equals(TYPE_TTCN3_SET)) {// set
 
 			Def_Type_Set_Writer setNode = new Def_Type_Set_Writer(typeNode);
-			// add component fields
 			setNode.add(compFieldTypes, compFieldNames);
 
 			String[] typeArray = (String[]) compFieldTypes.toArray(new String[compFieldTypes.size()]);
@@ -10442,10 +9609,8 @@ public class Def_Type_Visit_Handler {
 
 			myASTVisitor.visualizeNodeToJava(setNode.getJavaSource());
 
-		} else if (type.getTypetype().equals(TYPE_TTCN3_CHOICE)) {// union
 
 			Def_Type_Union_Writer union_writer = new Def_Type_Union_Writer(typeNode);
-			// add component fields
 			union_writer.add(compFieldTypes, compFieldNames);
 
 			String[] typeArray = compFieldTypes.toArray(new String[compFieldTypes.size()]);
@@ -10526,7 +9691,6 @@ public class Def_Type_Visit_Handler {
 			Def_Type_Component_Writer compNode = Def_Type_Component_Writer.getInstance(typeNode);
 			compNode.clearLists();
 
-			// add component fields
 
 			compNode.compFieldPortTypes.addAll(componentPortTypes);
 			compNode.compFieldPortNames.addAll(componentPortNames);
@@ -10582,7 +9746,6 @@ class ModuleParameterParser implements Scope {
 			myASTVisitor.nodeNameNodeTypeHashMap.put(name, "modulePar");
 		}
 
-		// TODO : generalize type parsing / handling
 		if ((node instanceof Boolean_Type)) {
 			type = "BOOLEAN";
 		}
@@ -10603,13 +9766,8 @@ class ModuleParameterParser implements Scope {
 		}
 		if (node instanceof Referenced_Type) {
 			type = ((Referenced_Type) node).getReference().toString();
-			// TODO : the value should be created as this type of object
-			// e.g.:
-			// type integer Digit (0..9);
-			// modulepar Digit d := 3;
 		}
 
-		// TODO : generalize value parsing / handling
 		if ((node instanceof Boolean_Value)) {
 			value = ((Boolean_Value) node).getValue() ? "BOOLEAN.TRUE" : "BOOLEAN.FALSE";
 		}
@@ -10632,8 +9790,6 @@ class ModuleParameterParser implements Scope {
 			value = ((Octetstring_Value) node).getValue();
 			value = "new OCTETSTRING(\"" + value + "\")";
 		}
-		// TODO : handle (referenced) subtype values
-		// TODO : handle record, set, record of and set of subtypes and values
 		return this;
 	}
 
@@ -10646,21 +9802,6 @@ class ModuleParameterParser implements Scope {
 		return this;
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -10764,7 +9905,6 @@ public class TestCase_Function_Visit_Handler {
 	private static String runsOnValue = null;
 	private static String currentIdentifier = null;
 
-	// Counters
 	private int tcCreateCounter = -1;
 	private int tcStartCounter = -1;
 	private int mapCounter = 0;
@@ -10814,7 +9954,6 @@ public class TestCase_Function_Visit_Handler {
 	public static boolean isThereAFormalParameter = false;
 	private boolean waitForIndexSetValue = false;
 
-	// Lists
 	private List<String> nodeVars = new ArrayList<String>();
 	private List<String> nodeVarTypes = new ArrayList<String>();
 	private List<String> nodeVarValues = new ArrayList<String>();
@@ -10918,19 +10057,14 @@ public class TestCase_Function_Visit_Handler {
 			expressionValue.clear();
 		}
 
-		// Check for TC
 		visitNodes(node);
 
-		// Check Functions
 		visitFunctionNodes(node);
 
-		// Check for TC
 		visitTcNodes(node);
 
-		// Check for TC If cases
 		visitTcIfCases(node);
 
-		// Check for TC Alt cases
 		visitAltCases(node);
 
 		if (node instanceof Reference) {
@@ -10941,19 +10075,15 @@ public class TestCase_Function_Visit_Handler {
 			evaluateExpression();
 		}
 
-		// testcases
-		// FormalParameter might come up for other types too, leave it here
 		if (node instanceof FormalParameter) {
 			isThereAFormalParameter = true;
 		}
 
 		if (isThereAFormalParameter && (node instanceof Reference)) {
-			// TODO: formal parameter reference handling (tpye name)
 			isThereAFormalParameter = false;
 		}
 
 		if (isThereAFormalParameter && (node instanceof Identifier)) {
-			// TODO: formal parameter identifier handling
 		}
 
 	}
@@ -10980,7 +10110,6 @@ public class TestCase_Function_Visit_Handler {
 			if ((node instanceof Assignment_Statement) || ((node instanceof If_Clause))) {
 				waitForValue = false;
 
-				// if assignment is a createExpression
 				if (node instanceof Assignment_Statement) {
 					if (((Assignment_Statement) node).getTemplate() instanceof SpecificValue_Template) {
 						SpecificValue_Template specValTemplate = (SpecificValue_Template) ((Assignment_Statement) node)
@@ -11046,7 +10175,6 @@ public class TestCase_Function_Visit_Handler {
 
 			if (node instanceof ComponentCreateExpression) {
 
-				// switch first two values
 				testCaseCreateValues.add(testCaseCreateCharValues.get(0));
 				testCaseCreateValues.add(testCaseCreateRefValues.get(0));
 
@@ -11106,7 +10234,6 @@ public class TestCase_Function_Visit_Handler {
 				if(waitForReceiveParameter){
 					altGuardReceiveType.add("noparam");
 				}
-				//TODO checkAnyport = true;
 				
 				
 			}
@@ -11290,13 +10417,11 @@ public class TestCase_Function_Visit_Handler {
 
 		}
 
-		// Set value for the appropriate list
 		if (isCreate) {
 			testCaseCreateCharValues.addAll(expressionValue);
 			testCaseCreateCounter.add(String.valueOf(tcCreateCounter));
 		} else if(isDoWhileStatement) {
 			doWhileExpressions.add(value);
-		//	isDoWhileStatement=false;
 		} else if (isDefinition) {
 
 			if (isNextValueConstant) {
@@ -11313,7 +10438,6 @@ public class TestCase_Function_Visit_Handler {
 
 			if (waitForRecord) {
 				nodeVarValues.addAll(expressionValue);
-				// waitForRecord = false;
 			} else {
 				nodeVarValues.add(value);
 			}
@@ -11338,7 +10462,6 @@ public class TestCase_Function_Visit_Handler {
 			} else {
 				receiveValue.add(value);
 			}
-			//waitForReceiveParameter=false;
 		} else if (isAltGuards) {
 			altGuardConditions.add(value);
 			isAltGuards = false;
@@ -11400,22 +10523,18 @@ public class TestCase_Function_Visit_Handler {
 		}
 
 		if (waitForTC || waitForFunction) {
-			// Check expression operators
 
-			// Check expression values
 			if (!waitForAssignmentIdentifiers) {
 				visitExpressionTypeSelectors(node);
 				visitExpressionValueSetters(node);
 			}
 		}
 		if (isIf && (node instanceof StatementBlock)) {
-			// has to be here, If always has a statemnt block
 			evaluateExpression();
 			isIf = false;
 
 		}
 		if (isDoWhileStatement && (node instanceof StatementBlock)) {
-			// has to be here, If always has a statemnt block
 			evaluateExpression();
 			isDoWhileStatement = false;
 
@@ -11450,9 +10569,7 @@ public class TestCase_Function_Visit_Handler {
 			visitMapIdentifiers(node);
 		}
 
-	/*	if (isSendStatement) {
 			visitSendStatements(node);
-		}*/
 
 		if (waitForTcDisconnectValues) {
 			visitDisconnectValueSetters(node);
@@ -11512,7 +10629,6 @@ public class TestCase_Function_Visit_Handler {
 		}
 
 		if (waitForDefStatement && (node instanceof Def_Const)) {
-			// TODO const spec
 			nodeVars.add(((Def_Const) node).getIdentifier().toString());
 			isNextValueConstant = true;
 			currentIdentifier = ((Def_Const) node).getIdentifier().toString();
@@ -11748,21 +10864,6 @@ public class TestCase_Function_Visit_Handler {
 			}
 
 			myASTVisitor.isNextIntegerNegative = false;
-			/*
-			 * if (nodeVarTypes.size() > 0) { if
-			 * (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(nodeVarTypes.
-			 * get(nodeVarTypes.size() - 1))) {
-			 * 
-			 * if (myASTVisitor.nodeNameNodeTypeHashMap.get(nodeVarTypes.get(
-			 * nodeVarTypes.size() - 1)) .equals("record")) {
-			 * 
-			 * if (currentRecordCounter <
-			 * myASTVisitor.nodeNameChildrenNamesHashMap
-			 * .get(nodeVarTypes.get(nodeVarTypes.size() - 1)).length) {
-			 * waitForRecord = true; nodeVarIsRecord.add(true);
-			 * 
-			 * } } } }
-			 */
 			blockReferenceListing = true;
 
 		}
@@ -11974,9 +11075,6 @@ public class TestCase_Function_Visit_Handler {
 				nodeAssignIdentifiers.set(nodeAssignIdentifiers.size() - 1,
 						nodeAssignIdentifiers.get(nodeAssignIdentifiers.size() - 1) + "=");
 
-				// Only set to false if there are no arraysubrefs
-				// For arraysubrefs the flag is set to false in the
-				// arraysubref leave part
 				waitForAssignmentIdentifiers = false;
 			}
 
@@ -12000,24 +11098,7 @@ public class TestCase_Function_Visit_Handler {
 			}
 
 		} else if (waitForValue && !isReceiveValue && !blockReferenceListing) {
-			// has to be the last one
-			// sends the Reference value to be processed as an assignment
-			// identifier
 			expressionValue.add(value);
-		} /*
-			 * else if (nodeVarTypes.size() > 0) { if
-			 * (myASTVisitor.nodeNameNodeTypeHashMap.containsKey(value)) {
-			 * 
-			 * if (myASTVisitor.nodeNameNodeTypeHashMap.get(nodeVarTypes.get(
-			 * nodeVarTypes.size() - 1)) .equals("record")) {
-			 * 
-			 * if (currentRecordCounter <
-			 * myASTVisitor.nodeNameChildrenNamesHashMap
-			 * .get(nodeVarTypes.get(nodeVarTypes.size() - 1)).length) {
-			 * waitForRecord = true; nodeVarIsRecord.add(true);
-			 * 
-			 * } } } }
-			 */
 
 	}
 
@@ -12446,21 +11527,6 @@ public class TestCase_Function_Visit_Handler {
 
 	}
 }
-/******************************************************************************
- * Copyright (c) 2000-2017 Ericsson Telecom AB
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *   
- *   Keremi, Andras
- *   Eros, Levente
- *   Kovacs, Gabor
- *   Meszaros, Mate Robert
- *
- ******************************************************************************/
 
 package org.eclipse.titan.codegenerator;
 
@@ -12517,7 +11583,6 @@ public final class myASTVisitor extends ASTVisitor implements Scope {
 
 	public static String importListStrings = "package org.eclipse.titan.codegenerator.javagen;"
 			+ "\r\n"
-			+ "import org.eclipse.titan.codegenerator.TTCN3JavaAPI.*;"
 			+ "\r\n"
 			+ "import java.util.ArrayList;"
 			+ "\r\n"
@@ -12566,7 +11631,6 @@ public final class myASTVisitor extends ASTVisitor implements Scope {
 	}
 
 	public static String changeTypeToJava(String string) {
-		// TODO : why only CHARSTRING? does it belong here?
 		if (string.equals("CHARSTRING")) {
 			return "SubTypeDef<CHARSTRING>";
 		}
@@ -12612,8 +11676,6 @@ public final class myASTVisitor extends ASTVisitor implements Scope {
 
 	@Override
 	public Scope process(IVisitableNode node) {
-		// visit* submethods only serve increased readability and
-		// categorization
 
 		myDefTypeVisitHandler.visit(node);
 
@@ -12633,16 +11695,11 @@ public final class myASTVisitor extends ASTVisitor implements Scope {
 			myASTVisitor.isNextIntegerNegative = true;
 		}
 
-		if (node instanceof Def_Extfunction) {//FormalParameterList Boolean_Type
 			
 			String nodeName=((Def_Extfunction)node).getIdentifier().toString();
 			nodeName.toString();
-			//((Def_Extfunction)node).getFormalParameterList();
-			// return type is the next *_Type after the Formalparamlist
-			//TODO process 
 		}
 
-		// Check for Function & TC nodes
 		myFunctionTestCaseVisitHandler.visit(node);
 
 		return this;
@@ -12668,13 +11725,6 @@ public final class myASTVisitor extends ASTVisitor implements Scope {
 		return this;
 	}
 
-	/**
-	 * Finish the visitor by writing the static parts:
-	 * - module parameters
-	 * - templates
-	 * - constants
-	 */
-	// TODO : move Constants and Templates here
 	void finish() {
 		currentFileName = parameters.getClassName();
 		visualizeNodeToJava(importListStrings);
